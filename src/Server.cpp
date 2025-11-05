@@ -119,13 +119,17 @@ void Server::start_main_loop()
 							!sending_user->getNick().empty() &&
 							!sending_user->getUser().empty())
 						{
+							std::cout << "user authenticated correctly" << std::endl;
 							sending_user->setActive(true);
 						}
-
-						std::cout << "user is not active" << std::endl;
+						else
+						{
+							std::cout << "user is not active" << std::endl;
+						}
 					}
 					else
 					{
+						// reimplement commands
 						std::cout << buffer << std::endl;
 						std::cout << "user is active" << std::endl;
 					}

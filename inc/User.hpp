@@ -20,12 +20,16 @@ class User
         ~User();
 
         //////////////////////
+        // Public Methods
+        //////////////////////
+        bool        isActive();
+
+        //////////////////////
         // Getters & Setters
         //////////////////////
         bool        getPswdFlag();
         void        setPswdFlag(bool value);
         int         getFd();
-        bool        isActive();
         void        setNick(std::string nick);
         std::string getNick();
         void        setUser(std::string user);
