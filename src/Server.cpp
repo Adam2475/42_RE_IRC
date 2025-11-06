@@ -15,17 +15,28 @@ Server::~Server() {}
 // Public Methods
 ////////////////////////
 
+// void Server::disconnectClient(int clientSocket, std::string quitMessage)
+// {
+
+// }
+
 User *Server::getUserByFd(int clientSocket)
 {
 	for (size_t i = 0; i < _users.size(); ++i)
 	{
 		if (_users[i].getFd() == clientSocket)
-		{
-			// returning reference
 			return (&_users[i]);
-		}
 	}
 	return NULL;
+}
+
+void Server::handle_new_connection(struct pollfd *tmp, int client_socket)
+{
+	init_pollfd(tmp, client_socket);
+	// /tmp->events |= POLLRDHUP;
+	_poll_fds.push_back(*tmp);
+	User new_user("", "", client_socket);
+	_users.push_back(new_user);
 }
 
 void Server::start_main_loop()
@@ -35,84 +46,60 @@ void Server::start_main_loop()
 	int								status;
 	char							buffer[1024];
 	std::vector<pollfd>::iterator	it;
+	//tmp.events |= POLLRDHUP;
 
-	// creating and inserting the server pollfd
 	init_pollfd(&tmp, _serv_fd);
 	_poll_fds.push_back(tmp);
 
 	while (true)
 	{
-		if (poll(_poll_fds.data(), _poll_fds.size(), -1) == -1)
-		{
-			return ;
-		}
+		// implement signals
 
-		// checking the server pollfd
+		if (poll(_poll_fds.data(), _poll_fds.size(), 0) == -1)
+			return ;
+
 		if (_poll_fds[0].revents & POLLIN)
 		{
-			std::cout << "incoming event received" << std::endl;
 			client_socket = accept(_serv_fd, NULL, NULL);
-
+			std::cout << client_socket << std::endl;
 			if (client_socket > 0)
-			{
-				std::cout << "new connection accepted" << std::endl;
-				pollfd tmp;
-				init_pollfd(&tmp, client_socket);
-				_poll_fds.push_back(tmp);
-				// create new user
-				User new_user("", "", client_socket);
-				_users.push_back(new_user);
-			}
+				handle_new_connection(&tmp, client_socket);
 		}
 
 		for (it = _poll_fds.begin() + 1; it != _poll_fds.end(); *it++)
 		{
 			if (it->revents & POLLIN)
 			{
-				std::cout << "message received from client" << std::endl;
-				//std::cout << it->fd << std::endl;
 				bzero(buffer, sizeof(buffer));
-				// returns the number of byte read or 0 if disconnect
 				status = recv(it->fd, buffer, sizeof(buffer) - 1, 0);
-				//std::cout << buffer << std::endl;
-				//std::cout << status << std::endl;
+				std::string tmp(buffer);
+				std::vector<std::string> parsed_message;
+				
 				if (status > 0)
 				{
 					User *sending_user;
 					sending_user = getUserByFd(it->fd);
-	
-					std::cout << sending_user->getFd() << std::endl;
-
-					// message building
 					buffer[status] = '\0';
-					std::string message(buffer);
-					std::stringstream oss(message);
+					parsed_message = parse_message(buffer);
 
-					std::string command;
-					oss >> command;
-	
+					if (clearStrCRFL(tmp) == 1)
+						continue ;
+					
 					if (!sending_user->isActive())
 					{
-						if (command == "PASS")
+						if (parsed_message.empty())
+							continue ;
+						if (parsed_message[0] == "PASS")
 						{
-							std::cout << command << std::endl;
 							sending_user->setPswdFlag(true);
 						}
-						else if (command == "NICK")
+						else if (parsed_message[0] == "NICK")
 						{
-							std::string tmp;
-							oss >> tmp;
-							std::cout << command << std::endl;
-							std::cout << tmp << std::endl;
-							sending_user->setNick(tmp);
+							sending_user->setNick(parsed_message[1]);
 						}
-						else if (command == "USER")
+						else if (parsed_message[0] == "USER")
 						{
-							std::string tmp;
-							oss >> tmp;
-							std::cout << command << std::endl;
-							std::cout << tmp << std::endl;
-							sending_user->setUser(tmp);
+							sending_user->setUser(parsed_message[1]);
 						}
 
 						if (sending_user->getPswdFlag() == true && 
@@ -133,6 +120,11 @@ void Server::start_main_loop()
 						std::cout << buffer << std::endl;
 						std::cout << "user is active" << std::endl;
 					}
+				}
+				// handle client disconnection
+				else if (status == 0)
+				{
+					std::cout << "client disconnected" << std::endl;
 				}
 			}
 		}

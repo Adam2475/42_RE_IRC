@@ -1,5 +1,36 @@
 #include "../inc/header.hpp"
 
+int	clearStrCRFL(std::string& received)
+{
+	if (received.empty())
+		return 1;
+	for (size_t i = 0; i < received.size(); i++)
+	{
+		if (received[i] == '\r')
+			received.erase(i);
+		else if (received[i] == '\n')
+			received.erase(i);
+	}
+	if (received.empty())
+		return 1;
+	return 0;
+}
+
+std::vector<std::string> parse_message(char *buffer)
+{
+    std::vector<std::string> tmp;
+	std::string message(buffer);
+	std::stringstream oss(message);
+    std::string word;
+
+    while (oss >> word)
+    {
+        //std::cout << word << std::endl;
+        tmp.push_back(word);
+    }
+    return (tmp);
+}
+
 void init_pollfd(pollfd *tmp, int fd)
 {
     tmp->fd = fd;

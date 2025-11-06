@@ -8,12 +8,9 @@ class User
     private:
         std::string     _nick;
         std::string     _user;
-        //struct pollfd   _pollfd;
         int             _fd;
         bool            _is_active;
         bool            _set_pass;
-        // bool            _set_nick;
-        // bool            _set_user;
     public:
         User();
         User(std::string nick, std::string user, int fd);

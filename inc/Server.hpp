@@ -26,6 +26,7 @@ class Server
         ///////////////////
         void    server_start();
         void    start_main_loop();
+        void    handle_new_connection(struct pollfd *tmp, int client_socket);
         User	*getUserByFd(int clientSocket);
 };
 

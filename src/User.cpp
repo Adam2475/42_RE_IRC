@@ -6,8 +6,6 @@ User::User(std::string nick, std::string user, int fd) : _nick(nick), _user(user
 {
     _is_active = false;
     _set_pass = false;
-    // _set_nick = false;
-    // _set_user = false;
 }
 
 User::~User() {}
