@@ -3,7 +3,7 @@ CC = c++
 
 SRCS = ./src/main.cpp ./src/utils.cpp ./src/Server.cpp ./src/User.cpp
 
-CFLAGS = -std=c++98 -Wall -Wextra -Werror
+CFLAGS = -std=c++98 -Wall -Wextra -Werror -g
 
 OBJS = $(SRCS:.cpp=.o)
 

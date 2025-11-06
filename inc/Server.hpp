@@ -28,6 +28,9 @@ class Server
         void    start_main_loop();
         void    handle_new_connection(struct pollfd *tmp, int client_socket);
         User	*getUserByFd(int clientSocket);
+        //User    findUserByFd(int clientSocket);
+        void    disconnectClient(int clientSocket);
+        void    shutdown_server();
 };
 
 #endif

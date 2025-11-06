@@ -12,6 +12,7 @@
 #include <vector>
 #include <sstream>
 // #include <fcntl.h>
+#include <csignal>
 
 bool                        is_numeric(const char *str);
 void                        invalid_port_error();
