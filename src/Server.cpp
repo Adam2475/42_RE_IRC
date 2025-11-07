@@ -15,6 +15,20 @@ Server::~Server() {}
 // Public Methods
 ////////////////////////
 
+static void printParsedMessage(const std::vector<std::string> &parsed_message)
+{
+    if (parsed_message.empty())
+    {
+        std::cout << "[parsed_message] <empty>\n";
+        return;
+    }
+    std::cout << "[parsed_message] (" << parsed_message.size() << " tokens):\n";
+    for (size_t i = 0; i < parsed_message.size(); ++i)
+    {
+        std::cout << "  [" << i << "] \"" << parsed_message[i] << "\"\n";
+    }
+}
+
 void Server::disconnectClient(int clientSocket)
 {
 	// Erase the user from all channels and notify members
@@ -170,6 +184,8 @@ void Server::start_main_loop()
 					sending_user = getUserByFd(_poll_fds[i].fd);
 					buffer[status] = '\0';
 					parsed_message = parse_message(buffer);
+
+					printParsedMessage(parsed_message);
 
 					if (clearStrCRFL(tmp) == 1)
 						continue ;

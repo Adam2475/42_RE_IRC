@@ -19,15 +19,33 @@ int	clearStrCRFL(std::string& received)
 std::vector<std::string> parse_message(char *buffer)
 {
     std::vector<std::string> tmp;
+    std::string tmp2;
 	std::string message(buffer);
 	std::stringstream oss(message);
+	bool flag = false;
     std::string word;
 
     while (oss >> word)
     {
+		if (word[0] == ':')
+		{
+			word = word.substr(1);
+			flag = true;
+		}
+		if (flag)
+		{
+			tmp2 += ' ';
+			tmp2 += word;
+		}
+		else
+			tmp.push_back(word);
         //std::cout << word << std::endl;
-        tmp.push_back(word);
     }
+	if (!tmp2.empty())
+	{
+		tmp2 = tmp2.substr(1);
+		tmp.push_back(tmp2);
+	}
     return (tmp);
 }
 
