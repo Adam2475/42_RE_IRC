@@ -30,7 +30,7 @@ class Server
         User	*getUserByFd(int clientSocket);
         //User    findUserByFd(int clientSocket);
         void    disconnectClient(int clientSocket);
-        void    shutdown_server();
+        // void    shutdown_server();
 };
 
 #endif

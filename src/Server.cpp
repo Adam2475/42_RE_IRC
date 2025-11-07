@@ -68,19 +68,6 @@ void Server::disconnectClient(int clientSocket)
 
 }
 
-// User Server::findUserByFd(int clientSocket)
-// {
-// 	User targetUser;
-// 	for (size_t ui = 0; ui < _users.size(); ++ui)
-// 	{
-// 		if (_users[ui].getFd() == clientSocket)
-// 		{
-// 			targetUser = _users[ui]; // copy
-// 		}
-// 	}
-// 	return targetUser;
-// }
-
 User *Server::getUserByFd(int clientSocket)
 {
 	for (size_t i = 0; i < _users.size(); ++i)
@@ -107,26 +94,6 @@ void signalHandler(int sig)
 	exit_code = sig;
 }
 
-void Server::shutdown_server()
-{
-	std::cout << "shutdown requested, cleaning up..." << std::endl;
-    // Close all fds registered in poll and clear containers so destructors free memory.
-    for (size_t i = 0; i < _poll_fds.size(); ++i)
-    {
-        if (_poll_fds[i].fd > 0)
-            close(_poll_fds[i].fd);
-    }
-    _poll_fds.clear();
-    _users.clear();
-    // Also ensure listening socket closed
-    if (_serv_fd > 0)
-    {
-        close(_serv_fd);
-        _serv_fd = -1;
-    }
-    exit(exit_code);
-}
-
 void Server::start_main_loop()
 {
 	struct pollfd					tmp;
@@ -141,13 +108,15 @@ void Server::start_main_loop()
 
 	while (true)
 	{
-		// implement signals
-		// SIGINT ctrl + C
 		
 		signal(SIGINT, signalHandler);
+		// signal(SIGQUIT, signalHandler);
 
 		if (exit_code)
-			shutdown_server();
+		{
+			close(_serv_fd);
+			break ;
+		}
 
 		if (poll(_poll_fds.data(), _poll_fds.size(), 0) == -1)
 			return ;

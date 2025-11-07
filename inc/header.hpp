@@ -23,5 +23,6 @@ int                         set_socket_listen(int *serv_fd);
 void                        init_pollfd(pollfd *tmp, int fd);
 std::vector<std::string>    parse_message(char *buffer);
 int                         clearStrCRFL(std::string& received);
+void                        signalHandler(int sig);
 
 #endif
