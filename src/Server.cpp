@@ -17,23 +17,6 @@ Server::~Server() {}
 
 void Server::disconnectClient(int clientSocket)
 {
-	// User quittingUser = findUserByFd(clientSocket);
-    // if (quittingUser.getNick().empty())
-	// {
-    //     // User may not be fully registered, or already cleaned up.
-    //     // Just ensure the socket is closed and removed from poll list.
-    //     for (size_t i = 0; i < _poll_fds.size(); ++i)
-	// 	{
-    //         if (_poll_fds[i].fd == clientSocket)
-	// 		{
-    //             close(_poll_fds[i].fd);
-    //             _poll_fds.erase(_poll_fds.begin() + i);
-    //             break;
-    //         }
-    //     }
-    //     return;
-    // }
-
 	// Erase the user from all channels and notify members
     // for (std::vector<Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	// {
@@ -65,7 +48,6 @@ void Server::disconnectClient(int clientSocket)
     }
 
 	std::cout << "Client " << clientSocket << ") disconnected." << std::endl;
-
 }
 
 User *Server::getUserByFd(int clientSocket)
@@ -92,6 +74,50 @@ static int exit_code = 0;
 void signalHandler(int sig)
 {
 	exit_code = sig;
+}
+
+int Server::authenticate_user(std::vector<std::string> parsed_message, User *sending_user)
+{
+	if (parsed_message.empty())
+		return (1);
+	if (parsed_message[0] == "PASS")
+	{
+		if (parsed_message[1].empty())
+		{
+			std::cout << "no password given" << std::endl;
+			return (1);
+		}
+		if (parsed_message[1] == _password)
+		{
+			sending_user->setPswdFlag(true);
+		}
+		else
+		{
+			std::cout << parsed_message[1] << std::endl;
+			std::cout << "wrong password" << std::endl;
+			return (1);
+		}
+	}
+	else if (parsed_message[0] == "NICK")
+	{
+		sending_user->setNick(parsed_message[1]);
+	}
+	else if (parsed_message[0] == "USER")
+	{
+		sending_user->setUser(parsed_message[1]);
+	}
+	if (sending_user->getPswdFlag() == true && 
+		!sending_user->getNick().empty() &&
+		!sending_user->getUser().empty())
+	{
+		std::cout << "user authenticated correctly" << std::endl;
+		sending_user->setActive(true);
+	}
+	else
+	{
+		std::cout << "user is not active" << std::endl;
+	}
+	return (0);
 }
 
 void Server::start_main_loop()
@@ -150,32 +176,8 @@ void Server::start_main_loop()
 					
 					if (!sending_user->isActive())
 					{
-						if (parsed_message.empty())
+						if (authenticate_user(parsed_message, sending_user))
 							continue ;
-						if (parsed_message[0] == "PASS")
-						{
-							sending_user->setPswdFlag(true);
-						}
-						else if (parsed_message[0] == "NICK")
-						{
-							sending_user->setNick(parsed_message[1]);
-						}
-						else if (parsed_message[0] == "USER")
-						{
-							sending_user->setUser(parsed_message[1]);
-						}
-
-						if (sending_user->getPswdFlag() == true && 
-							!sending_user->getNick().empty() &&
-							!sending_user->getUser().empty())
-						{
-							std::cout << "user authenticated correctly" << std::endl;
-							sending_user->setActive(true);
-						}
-						else
-						{
-							std::cout << "user is not active" << std::endl;
-						}
 					}
 					else
 					{
