@@ -15,19 +15,19 @@ Server::~Server() {}
 // Public Methods
 ////////////////////////
 
-static void printParsedMessage(const std::vector<std::string> &parsed_message)
-{
-    if (parsed_message.empty())
-    {
-        std::cout << "[parsed_message] <empty>\n";
-        return;
-    }
-    std::cout << "[parsed_message] (" << parsed_message.size() << " tokens):\n";
-    for (size_t i = 0; i < parsed_message.size(); ++i)
-    {
-        std::cout << "  [" << i << "] \"" << parsed_message[i] << "\"\n";
-    }
-}
+// static void printParsedMessage(const std::vector<std::string> &parsed_message)
+// {
+//     if (parsed_message.empty())
+//     {
+//         std::cout << "[parsed_message] <empty>\n";
+//         return;
+//     }
+//     std::cout << "[parsed_message] (" << parsed_message.size() << " tokens):\n";
+//     for (size_t i = 0; i < parsed_message.size(); ++i)
+//     {
+//         std::cout << "  [" << i << "] \"" << parsed_message[i] << "\"\n";
+//     }
+// }
 
 void Server::disconnectClient(int clientSocket)
 {
@@ -74,6 +74,25 @@ User *Server::getUserByFd(int clientSocket)
 	return NULL;
 }
 
+void Server::check_authentication(User *sending_user)
+{
+	if (sending_user->getPswdFlag() == true && 
+		!sending_user->getNick().empty() &&
+		!sending_user->getUser().empty())
+	{
+		std::string message;
+		message += ":server 001 ";
+		message += sending_user->getNick();
+		message += " :Welcome to 42_IRC, ";
+		message += sending_user->getNick();
+		message += "\n\r";
+		//sending_user->setWrongPswd(true);
+		send(sending_user->getFd(), message.c_str(), message.size(), 0);
+		//std::cout << "user authenticated correctly" << std::endl;
+		sending_user->setActive(true);
+	}
+}
+
 void Server::handle_new_connection(struct pollfd *tmp, int client_socket)
 {
 	init_pollfd(tmp, client_socket);
@@ -108,8 +127,8 @@ int Server::authenticate_user(std::vector<std::string> parsed_message, User *sen
 		{
 			std::string message;
 			message += ":server 464 ";
-			message += sending_user->getNick();
-			message += ":Password Incorrect\n";
+			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
+			message += " :Password Incorrect\n\r";
 			//sending_user->setWrongPswd(true);
 			send(sending_user->getFd(), message.c_str(), message.size(), 0);
 			return (1);
@@ -123,8 +142,8 @@ int Server::authenticate_user(std::vector<std::string> parsed_message, User *sen
 		{
 			std::string message;
 			message += ":server 464 ";
-			message += sending_user->getNick();
-			message += ":Password Incorrect\n";
+			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
+			message += " :Password Incorrect\n\r";
 			//sending_user->setWrongPswd(true);
 			send(sending_user->getFd(), message.c_str(), message.size(), 0);
 			return (1);
@@ -139,17 +158,7 @@ int Server::authenticate_user(std::vector<std::string> parsed_message, User *sen
 		//:10.11.4.10 461 adam :Usage: USER <username> <mode> <unused> <realname>
 		sending_user->setUser(parsed_message[1]);
 	}
-	if (sending_user->getPswdFlag() == true && 
-		!sending_user->getNick().empty() &&
-		!sending_user->getUser().empty())
-	{
-		std::cout << "user authenticated correctly" << std::endl;
-		sending_user->setActive(true);
-	}
-	else
-	{
-		std::cout << "user is not active" << std::endl;
-	}
+	check_authentication(sending_user);
 	return (0);
 }
 
@@ -206,7 +215,7 @@ void Server::start_main_loop()
 					buffer[status] = '\0';
 					parsed_message = parse_message(buffer);
 
-					printParsedMessage(parsed_message);
+					//printParsedMessage(parsed_message);
 
 					if (clearStrCRFL(tmp) == 1)
 						continue ;
@@ -229,7 +238,7 @@ void Server::start_main_loop()
 							send(sending_user->getFd(), message.c_str(), message.size(), 0);
 						}
 						std::cout << buffer << std::endl;
-						std::cout << "user is active" << std::endl;
+						//std::cout << "user is active" << std::endl;
 					}
 				}
 				// handle client disconnection

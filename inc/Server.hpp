@@ -32,6 +32,7 @@ class Server
         void    disconnectClient(int clientSocket);
         // void    shutdown_server();
         int     authenticate_user(std::vector<std::string> parsed_message, User *sending_user);
+        void    check_authentication(User *sending_user);
 };
 
 #endif
