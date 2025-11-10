@@ -136,6 +136,7 @@ int Server::authenticate_user(std::vector<std::string> parsed_message, User *sen
 	}
 	else if (parsed_message[0] == "USER")
 	{
+		//:10.11.4.10 461 adam :Usage: USER <username> <mode> <unused> <realname>
 		sending_user->setUser(parsed_message[1]);
 	}
 	if (sending_user->getPswdFlag() == true && 
@@ -218,6 +219,15 @@ void Server::start_main_loop()
 					else
 					{
 						// reimplement commands
+						if (parsed_message[0] == "PASS")
+						{
+							std::string message;
+							message += ":server 462 ";
+							message += sending_user->getNick();
+							message += " :User Already Registered\n";
+							//sending_user->setWrongPswd(true);
+							send(sending_user->getFd(), message.c_str(), message.size(), 0);
+						}
 						std::cout << buffer << std::endl;
 						std::cout << "user is active" << std::endl;
 					}
