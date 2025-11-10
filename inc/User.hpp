@@ -11,6 +11,7 @@ class User
         int             _fd;
         bool            _is_active;
         bool            _set_pass;
+        //bool            _wrong_pass;
     public:
         User();
         User(std::string nick, std::string user, int fd);
@@ -32,6 +33,8 @@ class User
         void        setUser(std::string user);
         std::string getUser();
         void        setActive(bool value);
+        //void        setWrongPswd(bool value);
+        //bool        getWrongPswd();
 };
 
 #endif

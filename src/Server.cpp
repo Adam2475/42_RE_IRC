@@ -90,25 +90,43 @@ void signalHandler(int sig)
 	exit_code = sig;
 }
 
+/*
+numeric response structure:
+- :sender
+- numeric code
+- target
+- :message
+*/
+
 int Server::authenticate_user(std::vector<std::string> parsed_message, User *sending_user)
 {
 	if (parsed_message.empty())
 		return (1);
 	if (parsed_message[0] == "PASS")
 	{
-		if (parsed_message[1].empty())
+		if (parsed_message.size() < 2 || parsed_message[1].empty())
 		{
-			std::cout << "no password given" << std::endl;
+			std::string message;
+			message += ":server 464 ";
+			message += sending_user->getNick();
+			message += ":Password Incorrect\n";
+			//sending_user->setWrongPswd(true);
+			send(sending_user->getFd(), message.c_str(), message.size(), 0);
 			return (1);
 		}
 		if (parsed_message[1] == _password)
 		{
+			//std::cout << "password is correct" << std::endl;
 			sending_user->setPswdFlag(true);
 		}
 		else
 		{
-			std::cout << parsed_message[1] << std::endl;
-			std::cout << "wrong password" << std::endl;
+			std::string message;
+			message += ":server 464 ";
+			message += sending_user->getNick();
+			message += ":Password Incorrect\n";
+			//sending_user->setWrongPswd(true);
+			send(sending_user->getFd(), message.c_str(), message.size(), 0);
 			return (1);
 		}
 	}
@@ -173,6 +191,8 @@ void Server::start_main_loop()
 		{
 			if (_poll_fds[i].revents & POLLIN)
 			{
+				User *sending_user;
+				sending_user = getUserByFd(_poll_fds[i].fd);
 				bzero(buffer, sizeof(buffer));
 				status = recv(_poll_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
 				std::string tmp(buffer);
