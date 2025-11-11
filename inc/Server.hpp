@@ -33,6 +33,7 @@ class Server
         // void    shutdown_server();
         int     authenticate_user(std::vector<std::string> parsed_message, User *sending_user);
         void    check_authentication(User *sending_user);
+        int     check_already_registered(std::vector<std::string> parsed_message, User *sending_user);
 };
 
 #endif
