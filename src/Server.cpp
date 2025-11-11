@@ -205,45 +205,74 @@ void Server::start_main_loop()
 				sending_user = getUserByFd(_poll_fds[i].fd);
 				bzero(buffer, sizeof(buffer));
 				status = recv(_poll_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
-				std::string tmp(buffer);
-				std::vector<std::string> parsed_message;
+				//std::string tmp(buffer);
+				//std::vector<std::string> parsed_message;
 				
 				if (status > 0)
 				{
-					User *sending_user;
-					sending_user = getUserByFd(_poll_fds[i].fd);
-					buffer[status] = '\0';
-					parsed_message = parse_message(buffer);
+					// User *sending_user;
+					// sending_user = getUserByFd(_poll_fds[i].fd);
 
-					//printParsedMessage(parsed_message);
-
-					if (clearStrCRFL(tmp) == 1)
-						continue ;
+					// append message to user buffer
+					sending_user->_buffer.append(buffer, (size_t)status);
 					
-					if (!sending_user->isActive())
+					
+					// search newline in the string
+					std::string tmp = sending_user->_buffer;
+					size_t newline_pos;
+
+
+					while ((newline_pos = tmp.find('\n')) != std::string::npos)
 					{
-						if (authenticate_user(parsed_message, sending_user))
-							continue ;
-					}
-					else
-					{
-						// reimplement commands
-						if (parsed_message[0] == "PASS")
+
+                        // take up to the newline (inclusive) and remove from buffer
+                        std::string line = tmp.substr(0, newline_pos + 1);
+                        tmp.erase(0, newline_pos + 1);
+
+						// strip trailing CR/LF
+                        while (!line.empty() && (line[line.size() - 1] == '\r' || line[line.size() - 1] == '\n'))
+                            line.erase(line.end() - 1);
+
+                        if (line.empty())
+                            continue;
+
+						std::vector<std::string> parsed_message;
+
+						parsed_message = parse_message(line);
+	
+						//printParsedMessage(parsed_message);
+	
+						// if (clearStrCRFL(tmp) == 1)
+						// 	continue ;
+						
+						if (!sending_user->isActive())
 						{
-							std::string message;
-							message += ":server 462 ";
-							message += sending_user->getNick();
-							message += " :User Already Registered\n";
-							//sending_user->setWrongPswd(true);
-							send(sending_user->getFd(), message.c_str(), message.size(), 0);
+							if (authenticate_user(parsed_message, sending_user))
+								continue ;
 						}
-						std::cout << buffer << std::endl;
-						//std::cout << "user is active" << std::endl;
+						else
+						{
+							// reimplement commands
+							if (parsed_message[0] == "PASS")
+							{
+								std::string message;
+								message += ":server 462 ";
+								message += sending_user->getNick();
+								message += " :User Already Registered\n";
+								//sending_user->setWrongPswd(true);
+								send(sending_user->getFd(), message.c_str(), message.size(), 0);
+							}
+							std::cout << line << std::endl;
+							//std::cout << "user is active" << std::endl;
+						}
 					}
+					// save any remaining partial data back into the user's buffer
+                    sending_user->_buffer = tmp;
 				}
 				// handle client disconnection
 				else if (status == 0)
 				{
+					// process partial commands before disconnecting
 					disconnectClient(_poll_fds[i].fd);
 					std::cout << "client disconnected" << std::endl;
 				}

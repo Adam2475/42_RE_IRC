@@ -16,7 +16,7 @@ int	clearStrCRFL(std::string& received)
 	return 0;
 }
 
-std::vector<std::string> parse_message(char *buffer)
+std::vector<std::string> parse_message(std::string buffer)
 {
     std::vector<std::string> tmp;
     std::string tmp2;

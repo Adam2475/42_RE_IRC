@@ -13,6 +13,7 @@ class User
         bool            _set_pass;
         //bool            _wrong_pass;
     public:
+        std::string     _buffer;
         User();
         User(std::string nick, std::string user, int fd);
         ~User();
