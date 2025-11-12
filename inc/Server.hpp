@@ -36,16 +36,16 @@ class Server
         int     authenticate_user(std::vector<std::string> parsed_message, User *sending_user);
         void    check_authentication(User *sending_user);
         int     check_already_registered(std::vector<std::string> parsed_message, User *sending_user);
-
+        int     check_commands(std::vector<std::string> parsed_message, User *sending_user);
 		int		channelAdder(std::string& channelName, User& user, std::string& pass);
         void    channelCreate(std::string& channelName, std::string& pass, User& user);
-
 
         ///////////////////
         // Commands
         ///////////////////
         int cmdJoin(std::vector<std::string>& mess, User &user);
         int cmdQuit(std::vector<std::string> parsed_message, User &user);
+        int cmdPrivateMsg(std::vector<std::string> parsed_message, User &user);
 };
 
 #endif

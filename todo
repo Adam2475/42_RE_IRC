@@ -3,4 +3,5 @@
 - handle commands over 512
 - check already existing nicknames | OK
 - check existing usernames
-- channel creation segfaults
+- channel creation segfaults | OK
+- channel get created with an extra hash

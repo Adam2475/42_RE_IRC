@@ -110,6 +110,104 @@ int Server::cmdJoin(std::vector<std::string>& mess, User &user)
 	return 0;
 }
 
+int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
+{
+    std::cout << "PRIVMSG found" << std::endl;
+	//std::string targetsToken;
+	//size_t sender_idx = getUserIdByName(senderNick);
+
+	// if (!(oss >> targetsToken) || targetsToken.empty())
+	// {
+	// 	std::string err = ":server 461 " + senderNick + " PRIVMSG :Not enough parameters\r\n";
+	// 	send(_users[sender_idx].getFd(), err.c_str(), err.size(), 0);
+	// 	return (1);
+	// }
+
+	std::string targetsToken;
+	std::string msgBody;
+	
+	if (parsed_message.size() < 3)
+	{
+		std::string err = ":server 461 " + user.getNick() + " PRIVMSG :Not enough parameters\r\n";
+	 	send(user.getFd(), err.c_str(), err.size(), 0);
+	 	return (1);		
+	}
+	else
+	{
+		targetsToken = parsed_message[1];
+		msgBody = parsed_message[2];
+	}
+
+	//bool target_found;
+	//std::cout << targetsToken << std::endl;
+	std::string target;
+	//std::string msgBody;
+	std::stringstream tss(targetsToken);
+	//std::getline(oss, msgBody);
+
+	while (std::getline(tss, target, ','))
+	{
+		bool is_channel = false;
+		if (target.empty())
+			return (1);
+		// find recipient fd by nickname
+		// int recipFd = -1;
+		size_t i = 0;
+ 
+		if (target[0] == '#')
+		{
+			is_channel = true;
+			//std::cout << "channels_no: " << _channels.size() << " i: " << i << std::endl;
+			std::string channelName = target.substr(1);
+			while (i < _channels.size())
+			{
+				std::cout << "channel: " << _channels[i].getName() << " i: " << i << std::endl;
+				if (_channels[i].getName() == channelName)
+				{
+					// recipFd = _users[ui].getFd();
+					break;
+				}
+				i++;
+			}
+			if (i == _channels.size())
+			{
+				//std::string err = "401 " + findNickName(clientSocket) + " " + singleTarget + " :No such nick/channel\r\n";
+				//send(clientSocket, err.c_str(), err.size(), 0);
+				std::cerr << "channel not found" << std::endl;
+				return (1);
+			}
+		}
+		else
+		{
+			while (i < _users.size())
+			{
+				if (_users[i].getNick() == target)
+				{
+					// recipFd = _users[ui].getFd();
+					break;
+				}
+				i++;
+			}
+			if (i == _users.size())
+			{
+				//std::string err = "401 " + findNickName(clientSocket) + " " + singleTarget + " :No such nick/channel\r\n";
+				//send(clientSocket, err.c_str(), err.size(), 0);
+				std::cerr << "user not found" << std::endl;
+				return (1);
+			}
+		}
+		// poll_fds[recipFd]
+		// build and send the PRIVMSG to the recipient
+		std::string out = ":" + user.getNick() + " PRIVMSG " + target + " :" + msgBody + "\r\n";
+
+		if (is_channel)
+			_channels[i].writeToChannel(out);
+		else
+			send(_users[i].getFd(), out.c_str(), out.size(), 0);
+	}
+    return (0);
+}
+
 int		Server::cmdQuit(std::vector<std::string> parsed_message, User &user)
 {
 	std::cout << "Detected command QUIT" << std::endl;

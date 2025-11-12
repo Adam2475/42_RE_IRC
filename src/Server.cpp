@@ -86,9 +86,7 @@ void Server::check_authentication(User *sending_user)
 		message += " :Welcome to 42_IRC, ";
 		message += sending_user->getNick();
 		message += "\n\r";
-		//sending_user->setWrongPswd(true);
 		send(sending_user->getFd(), message.c_str(), message.size(), 0);
-		//std::cout << "user authenticated correctly" << std::endl;
 		sending_user->setActive(true);
 	}
 }
@@ -96,7 +94,6 @@ void Server::check_authentication(User *sending_user)
 void Server::handle_new_connection(struct pollfd *tmp, int client_socket)
 {
 	init_pollfd(tmp, client_socket);
-	// /tmp->events |= POLLRDHUP;
 	_poll_fds.push_back(*tmp);
 	User new_user("", "", client_socket);
 	_users.push_back(new_user);
@@ -110,13 +107,25 @@ void signalHandler(int sig)
 	exit_code = sig;
 }
 
-/*
-numeric response structure:
-- :sender
-- numeric code
-- target
-- :message
-*/
+int Server::check_commands(std::vector<std::string> parsed_message, User *sending_user)
+{
+	if (parsed_message[0] == "JOIN")
+	{
+		cmdJoin(parsed_message, *sending_user);
+		return (1);
+	}
+	if (parsed_message[0] == "QUIT")
+	{
+		cmdQuit(parsed_message, *sending_user);
+		return (1);
+	}
+	if (parsed_message[0] == "PRIVMSG")
+	{
+		cmdPrivateMsg(parsed_message, *sending_user);
+		return (1);
+	}
+	return (0);
+}
 
 int Server::authenticate_user(std::vector<std::string> parsed_message, User *sending_user)
 {
@@ -174,13 +183,11 @@ int Server::authenticate_user(std::vector<std::string> parsed_message, User *sen
 	}
 	else if (parsed_message[0] == "USER")
 	{
-		//:10.11.4.10 461 adam :Usage: USER <username> <mode> <unused> <realname>
 		if (parsed_message.size() != 5)
 		{
 			std::string message;
 			message += ":server 461 ";
 			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
-			//message += " :Usage: USER <username> <mode> <unused> <realname>\n\r";
 			message += " :USER :Not enough parameters\n\r";
 			send(sending_user->getFd(), message.c_str(), message.size(), 0);
 			return (1);
@@ -239,15 +246,12 @@ void Server::start_main_loop()
 	int								client_socket;
 	int								status;
 	char							buffer[1024];
-	//std::vector<pollfd>::iterator	it;
-	//tmp.events |= POLLRDHUP;
 
 	init_pollfd(&tmp, _serv_fd);
 	_poll_fds.push_back(tmp);
 
 	while (true)
 	{
-		
 		signal(SIGINT, signalHandler);
 		//signal(SIGQUIT, signalHandler);
 		signal(SIGTSTP, signalHandler);
@@ -318,18 +322,15 @@ void Server::start_main_loop()
 						}
 						else
 						{
-							// reimplement commands
-							if (parsed_message[0] == "JOIN")
+							if (check_already_registered(parsed_message, sending_user) 
+								|| check_commands(parsed_message, sending_user))
 							{
-								cmdJoin(parsed_message, *sending_user);
-							}
-							if (parsed_message[0] == "QUIT")
-							{
-								cmdQuit(parsed_message, *sending_user);
-							}
-							if (check_already_registered(parsed_message, sending_user))
 								continue;
-							std::cout << line << std::endl;
+							}
+							else
+							{
+								std::cout << "command not found" << std::endl;
+							}
 						}
 					}
 					// save any remaining partial data back into the user's buffer
