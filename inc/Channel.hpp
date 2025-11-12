@@ -36,7 +36,7 @@ class Channel
 		/////////////////////////////////////
 		// Channel Menagement
 		// void	kickUser(User& user, User& user_operator, std::string msg);
-		// void	partUser(User& user, Channel &channel, std::string msg);
+		void	partUser(User& user, Channel &channel, std::string msg);
 		void	writeToChannel(std::string& buffer) const;
 		// void	showChannelTopic();
 		// bool	isOperatorUser(User target_user) const;

@@ -31,15 +31,19 @@ Server::~Server() {}
 
 void Server::disconnectClient(int clientSocket)
 {
+	User *quittingUser = getUserByFd(clientSocket);
+	//std::string out;
+
+	//out = ":" + user_prefix + " PART #" + channelName + " :" + msg + "\r\n";
 	// Erase the user from all channels and notify members
-    // for (std::vector<Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
-	// {
-    //     if (isInVector(quittingUser, it->getUserVector()))
-	// 	{
-    //         //it->writeToChannel(quittingUser, out);
-    //         it->partUser(quittingUser, *it, out);
-    //     }
-    // }
+    for (std::vector<Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+	{
+        if (isInVector(*quittingUser, it->getUserVector()))
+		{
+            // /it->writeToChannel(out);
+            it->partUser(*quittingUser, *it, "disconnecting");
+        }
+    }
 
 	for (size_t i = 0; i < _poll_fds.size(); ++i)
 	{
@@ -341,7 +345,7 @@ void Server::start_main_loop()
 				{
 					// process partial commands before disconnecting
 					disconnectClient(_poll_fds[i].fd);
-					std::cout << "client disconnected" << std::endl;
+					//std::cout << "client disconnected" << std::endl;
 				}
 			}
 		}

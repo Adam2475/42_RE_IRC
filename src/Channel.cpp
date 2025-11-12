@@ -128,7 +128,43 @@ void	Channel::setTopicRestriction(bool set)
 	_topic_restriction = set;
 }
 
+//////////////////////
 // Public Functions
+//////////////////////
+
+void	Channel::partUser(User& user, Channel &channel, std::string msg)
+{
+	std::string channelName = channel.getName();
+
+	for (std::vector<User>::iterator it = _user_vector.begin(); it != _user_vector.end(); ++it)
+	{
+		if (user == *it)
+		{
+			_user_vector.erase(it);
+			break;
+		}
+	}
+	if (isInVector(user, _operators_vector))
+	{
+		for (std::vector<User>::iterator it = _operators_vector.begin(); it != _operators_vector.end(); ++it)
+		{
+			if (user == *it)
+			{
+				_operators_vector.erase(it);
+				break;
+			}
+		}
+	}
+
+	// Build the compliant PART message with the user's full prefix
+	// get hostname probably not necessary
+    std::string user_prefix = user.getNick() + "!" + user.getUser() + "@"; // + user.getHostName();
+    std::string part_msg = ":" + user_prefix + " PART #" + channelName + " :" + msg + "\r\n";
+
+    // Broadcast to all users in the channel (including the sender)
+    channel.writeToChannel(part_msg);
+    send(user.getFd(), part_msg.c_str(), part_msg.size(), 0);
+}
 
 void	Channel::addUserToChannel(User& user, std::string& passwd)
 {
