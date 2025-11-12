@@ -73,6 +73,77 @@ void    Server::channelCreate(std::string& channelName, std::string& pass, User&
     send(user.getFd(), endofnames_msg.c_str(), endofnames_msg.size(), 0);
 }
 
+int Server::cmdPart(std::vector<std::string> parsed_message, User &user)
+{
+    //User *user = getUserByFd(clientSocket);
+    // if (user.getNick().empty()) {
+    //     return 1; // User not found
+    // }
+	// reference always initialized
+
+    std::string channelName;
+    // oss >> channelName;
+
+    if (parsed_message.size() < 2)
+    {
+        // ERR_NEEDMOREPARAMS (461)
+        std::string msg = ":server 461 " + user.getNick() + " PART :Not enough parameters\r\n";
+        send(user.getFd(), msg.c_str(), msg.size(), 0);
+        return 1;
+    }
+	else
+	{
+		channelName = parsed_message[1];
+	}
+
+    if (channelName[0] == '#') {
+        channelName = channelName.substr(1);
+    }
+
+    Channel* targetChannel = findChannelByName(channelName);
+
+    if (targetChannel == NULL) {
+        // ERR_NOSUCHCHANNEL (403)
+        std::string msg = ":server 403 " + user.getNick() + " #" + channelName + " :No such channel\r\n";
+        send(user.getFd(), msg.c_str(), msg.size(), 0);
+        return 1;
+    }
+
+    if (!isInVector(user, targetChannel->getUserVector())) {
+        // ERR_NOTONCHANNEL (442)
+        std::string msg = ":server 442 " + user.getNick() + " #" + channelName + " :You're not on that channel\r\n";
+        send(user.getFd(), msg.c_str(), msg.size(), 0);
+        return 1;
+    }
+
+	std::string reason;
+	if (parsed_message.size() == 3)
+	{
+		reason = parsed_message[2];
+	}
+	else
+	{
+		reason = "Leaving";
+	}
+
+    // Correctly parse the multi-word reason
+    // std::getline(oss, reason);
+    // if (!reason.empty() && reason[0] == ' ') {
+    //     reason = reason.substr(1);
+    // }
+    // if (!reason.empty() && reason[0] == ':'){
+    //     reason = reason.substr(1);
+    // } else if (reason.empty()) {
+    //     reason = "Leaving"; // Default reason
+    // }
+
+    // Remove the user from the channel's internal list
+	// moved reply message logic to partUser()
+    targetChannel->partUser(user, *targetChannel, reason);
+
+    return 0;
+}
+
 int Server::cmdJoin(std::vector<std::string>& mess, User &user)
 {
 	std::string channelName;

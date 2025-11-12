@@ -95,6 +95,20 @@ void Server::check_authentication(User *sending_user)
 	}
 }
 
+Channel*	Server::findChannelByName(std::string channelName)
+{
+	Channel targetChannel;
+ 	for (std::vector<Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+	{
+        if (it->getName() == channelName)
+		{
+            return &(*it);
+        }
+    }
+	// channel not found
+	return NULL;
+}
+
 void Server::handle_new_connection(struct pollfd *tmp, int client_socket)
 {
 	init_pollfd(tmp, client_socket);
@@ -126,6 +140,11 @@ int Server::check_commands(std::vector<std::string> parsed_message, User *sendin
 	if (parsed_message[0] == "PRIVMSG")
 	{
 		cmdPrivateMsg(parsed_message, *sending_user);
+		return (1);
+	}
+	if (parsed_message[0] == "PART")
+	{
+		cmdPart(parsed_message, *sending_user);
 		return (1);
 	}
 	return (0);

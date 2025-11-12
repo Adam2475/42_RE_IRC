@@ -5,3 +5,4 @@
 - check existing usernames
 - channel creation segfaults | OK
 - channel get created with an extra hash
+- implement "JOIN 0"
