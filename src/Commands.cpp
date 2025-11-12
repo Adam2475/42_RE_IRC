@@ -109,3 +109,53 @@ int Server::cmdJoin(std::vector<std::string>& mess, User &user)
 	channelCreate(channelName, pass, user);
 	return 0;
 }
+
+int		Server::cmdQuit(std::vector<std::string> parsed_message, User &user)
+{
+	std::cout << "Detected command QUIT" << std::endl;
+
+	//User quittingUser;
+    //quittingUser = getUserByFd(clientSocket);
+
+	//std::string quit_msg;
+    //std::getline(oss, quit_msg);
+    // if (!quit_msg.empty() && quit_msg[0] == ' ')
+    //     quit_msg = quit_msg.substr(1);
+    // if (quit_msg.empty() || quit_msg[0] != ':')
+    // {
+    //     quit_msg = ":Client Quit";
+    // }
+
+	std::string quit_msg;
+
+	if (parsed_message.size() == 2)
+	{
+		quit_msg = parsed_message[1];
+	}
+	else
+	{
+		quit_msg = ":Client Quit";
+	}
+
+	std::string out;
+	out += ":";
+	out += user.getNick();
+	out += " QUIT";
+	out += quit_msg;
+	out += "\r\n";
+	//  = ":" + quittingUser.getNickName() + " QUIT " + quit_msg + "\r\n";
+
+    // Erasing the user from all channels
+    // for (std::vector<Channel>::reverse_iterator it = _channels.rbegin(); it != _channels.rend(); ++it)
+    // {
+    //     if (isInVector(quittingUser, it->getUserVector()))
+    //     {
+    //         //it->writeToChannel(quittingUser, out);
+    //         it->partUser(quittingUser, *it, quit_msg);
+    //     }
+    // }
+
+	disconnectClient(user.getFd());
+
+	return (0);
+}

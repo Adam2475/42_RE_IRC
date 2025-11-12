@@ -14,7 +14,8 @@
 #include <sstream>
 // #include <fcntl.h>
 #include <csignal>
-#include "User.hpp"
+// header should only be included elswhere for prototypes
+// #include "User.hpp"
 
 ///////////////
 /// Colors
@@ -60,7 +61,6 @@ void                        init_pollfd(pollfd *tmp, int fd);
 std::vector<std::string>    parse_message(std::string buffer);
 int                         clearStrCRFL(std::string& received);
 void                        signalHandler(int sig);
-bool                    	isInVector(User& user, const std::vector<User>& vector);
 std::string                 message_formatter(int error, const std::string& nickname, const std::string& channel, const char* message);
 
 #endif

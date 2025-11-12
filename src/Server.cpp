@@ -319,24 +319,16 @@ void Server::start_main_loop()
 						else
 						{
 							// reimplement commands
-<<<<<<< HEAD
-							if (parsed_message[0] == "PASS")
-							{
-								std::string message;
-								message += ":server 462 ";
-								message += sending_user->getNick();
-								message += " :User Already Registered\n";
-								//sending_user->setWrongPswd(true);
-								send(sending_user->getFd(), message.c_str(), message.size(), 0);
-							}
 							if (parsed_message[0] == "JOIN")
 							{
 								cmdJoin(parsed_message, *sending_user);
 							}
-=======
+							if (parsed_message[0] == "QUIT")
+							{
+								cmdQuit(parsed_message, *sending_user);
+							}
 							if (check_already_registered(parsed_message, sending_user))
 								continue;
->>>>>>> c2a6fa3871f7e3d8f3ccdb1a4f11c6a6871c22c3
 							std::cout << line << std::endl;
 						}
 					}

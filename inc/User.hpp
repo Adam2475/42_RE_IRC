@@ -1,6 +1,7 @@
 #ifndef USER_HPP
 #define USER_HPP
 #include <iostream>
+#include "header.hpp"
 
 class User
 {
@@ -38,6 +39,7 @@ class User
         //bool        getWrongPswd();
 };
 
-int check_existing_user(std::vector<User> users, std::string username);
+int     check_existing_user(std::vector<User> users, std::string username);
+bool    isInVector(User& user, const std::vector<User>& vector);
 
 #endif
