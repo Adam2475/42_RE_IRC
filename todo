@@ -1,0 +1,5 @@
+- close connection when inputted wrong PASS (?)
+- set max size for user and nick
+- handle commands over 512
+- check already existing nicknames | OK
+- check existing usernames

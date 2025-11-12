@@ -106,6 +106,7 @@ static int exit_code = 0;
 
 void signalHandler(int sig)
 {
+	std::cout << "called signal handler" << std::endl;
 	exit_code = sig;
 }
 
@@ -129,13 +130,11 @@ int Server::authenticate_user(std::vector<std::string> parsed_message, User *sen
 			message += ":server 464 ";
 			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
 			message += " :Password Incorrect\n\r";
-			//sending_user->setWrongPswd(true);
 			send(sending_user->getFd(), message.c_str(), message.size(), 0);
 			return (1);
 		}
 		if (parsed_message[1] == _password)
 		{
-			//std::cout << "password is correct" << std::endl;
 			sending_user->setPswdFlag(true);
 		}
 		else
@@ -144,21 +143,93 @@ int Server::authenticate_user(std::vector<std::string> parsed_message, User *sen
 			message += ":server 464 ";
 			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
 			message += " :Password Incorrect\n\r";
-			//sending_user->setWrongPswd(true);
 			send(sending_user->getFd(), message.c_str(), message.size(), 0);
 			return (1);
 		}
 	}
 	else if (parsed_message[0] == "NICK")
 	{
-		sending_user->setNick(parsed_message[1]);
+		if (parsed_message.size() < 2 || parsed_message[1].empty())
+		{
+			std::string message;
+			message += ":server 461 ";
+			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
+			message += " :Not enough parameters\n\r";
+			send(sending_user->getFd(), message.c_str(), message.size(), 0);
+			return (1);
+		}
+		if (check_existing_user(_users, parsed_message[1]))
+		{
+			std::string message;
+			message += ":server 433 ";
+			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
+			message += " :Nickname is already in use\n\r";
+			send(sending_user->getFd(), message.c_str(), message.size(), 0);
+			return (1);
+		}
+		else
+		{
+			sending_user->setNick(parsed_message[1]);		
+		}
 	}
 	else if (parsed_message[0] == "USER")
 	{
 		//:10.11.4.10 461 adam :Usage: USER <username> <mode> <unused> <realname>
-		sending_user->setUser(parsed_message[1]);
+		if (parsed_message.size() != 5)
+		{
+			std::string message;
+			message += ":server 461 ";
+			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
+			//message += " :Usage: USER <username> <mode> <unused> <realname>\n\r";
+			message += " :USER :Not enough parameters\n\r";
+			send(sending_user->getFd(), message.c_str(), message.size(), 0);
+			return (1);
+		}
+		else
+		{
+			sending_user->setUser(parsed_message[1]);
+		}
 	}
 	check_authentication(sending_user);
+	return (0);
+}
+
+int Server::check_already_registered(std::vector<std::string> parsed_message, User *sending_user)
+{
+	if (parsed_message[0] == "PASS" || parsed_message[0] == "USER")
+	{
+		std::string message;
+		message += ":server 462 ";
+		message += sending_user->getNick();
+		message += " :You may not reregister\n\r";
+		send(sending_user->getFd(), message.c_str(), message.size(), 0);
+		return (1);
+	}
+	if (parsed_message[0] == "NICK")
+	{
+		if (parsed_message.size() < 2 || parsed_message[1].empty())
+		{
+			std::string message;
+			message += ":server 461 ";
+			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
+			message += " :Not enough parameters\n\r";
+			send(sending_user->getFd(), message.c_str(), message.size(), 0);
+			return (1);
+		}
+		if (check_existing_user(_users, parsed_message[1]))
+		{
+			std::string message;
+			message += ":server 433 ";
+			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
+			message += " :Nickname is already in use\n\r";
+			send(sending_user->getFd(), message.c_str(), message.size(), 0);
+			return (1);
+		}
+		else
+		{
+			sending_user->setNick(parsed_message[1]);		
+		}
+	}
 	return (0);
 }
 
@@ -178,7 +249,8 @@ void Server::start_main_loop()
 	{
 		
 		signal(SIGINT, signalHandler);
-		// signal(SIGQUIT, signalHandler);
+		//signal(SIGQUIT, signalHandler);
+		signal(SIGTSTP, signalHandler);
 
 		if (exit_code)
 		{
@@ -205,22 +277,16 @@ void Server::start_main_loop()
 				sending_user = getUserByFd(_poll_fds[i].fd);
 				bzero(buffer, sizeof(buffer));
 				status = recv(_poll_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
-				//std::string tmp(buffer);
-				//std::vector<std::string> parsed_message;
 				
 				if (status > 0)
 				{
-					// User *sending_user;
-					// sending_user = getUserByFd(_poll_fds[i].fd);
 
 					// append message to user buffer
 					sending_user->_buffer.append(buffer, (size_t)status);
 					
-					
 					// search newline in the string
 					std::string tmp = sending_user->_buffer;
 					size_t newline_pos;
-
 
 					while ((newline_pos = tmp.find('\n')) != std::string::npos)
 					{
@@ -248,11 +314,12 @@ void Server::start_main_loop()
 						if (!sending_user->isActive())
 						{
 							if (authenticate_user(parsed_message, sending_user))
-								continue ;
+								continue;
 						}
 						else
 						{
 							// reimplement commands
+<<<<<<< HEAD
 							if (parsed_message[0] == "PASS")
 							{
 								std::string message;
@@ -266,8 +333,11 @@ void Server::start_main_loop()
 							{
 								cmdJoin(parsed_message, *sending_user);
 							}
+=======
+							if (check_already_registered(parsed_message, sending_user))
+								continue;
+>>>>>>> c2a6fa3871f7e3d8f3ccdb1a4f11c6a6871c22c3
 							std::cout << line << std::endl;
-							//std::cout << "user is active" << std::endl;
 						}
 					}
 					// save any remaining partial data back into the user's buffer

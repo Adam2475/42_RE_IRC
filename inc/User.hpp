@@ -38,4 +38,6 @@ class User
         //bool        getWrongPswd();
 };
 
+int check_existing_user(std::vector<User> users, std::string username);
+
 #endif
