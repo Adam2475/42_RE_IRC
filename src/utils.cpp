@@ -106,3 +106,23 @@ bool is_numeric(const char *str)
     }
     return (false);
 }
+
+bool	isInVector(User& user, const std::vector<User>& vector)
+{
+	for (size_t i = 0; i < vector.size(); i++)
+	{
+		if (vector[i] == user)
+			return 1;
+	}
+	return 0;	
+}
+
+
+std::string message_formatter(int error, const std::string& nickname, const std::string& channel, const char* message)
+{
+    std::string msg;
+	std::ostringstream err;
+	err << error;
+    msg = ":server " + err.str() + ' ' + nickname + ' ' + '#' + channel + " :" + message;
+    return (msg);
+}

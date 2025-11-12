@@ -25,7 +25,7 @@ void User::setUser(std::string user)
     _user = user;
 }
 
-bool User::getPswdFlag()
+bool User::getPswdFlag() const
 {
     return _set_pass;
 }
@@ -55,17 +55,24 @@ bool User::isActive()
     return (_is_active == true ? true : false);
 }
 
-int User::getFd()
+int User::getFd() const
 {
     return _fd;
 }
 
-std::string User::getNick()
+std::string User::getNick() const
 {
     return _nick;
 }
 
-std::string User::getUser()
+std::string User::getUser() const
 {
     return _user;
+}
+
+bool User::operator==(const User& other) const
+{
+	if (_fd == other.getFd())
+		return 1;
+	return 0;
 }

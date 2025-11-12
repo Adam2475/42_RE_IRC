@@ -262,6 +262,10 @@ void Server::start_main_loop()
 								//sending_user->setWrongPswd(true);
 								send(sending_user->getFd(), message.c_str(), message.size(), 0);
 							}
+							if (parsed_message[0] == "JOIN")
+							{
+								cmdJoin(parsed_message, *sending_user);
+							}
 							std::cout << line << std::endl;
 							//std::cout << "user is active" << std::endl;
 						}

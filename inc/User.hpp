@@ -1,7 +1,6 @@
 #ifndef USER_HPP
 #define USER_HPP
-
-#include "header.hpp"
+#include <iostream>
 
 class User
 {
@@ -17,22 +16,23 @@ class User
         User();
         User(std::string nick, std::string user, int fd);
         ~User();
-
+        
         //////////////////////
         // Public Methods
         //////////////////////
         bool        isActive();
+		bool operator==(const User& other) const;
 
         //////////////////////
         // Getters & Setters
         //////////////////////
-        bool        getPswdFlag();
+        bool        getPswdFlag() const;
         void        setPswdFlag(bool value);
-        int         getFd();
+        int         getFd() const;
         void        setNick(std::string nick);
-        std::string getNick();
+        std::string getNick() const;
         void        setUser(std::string user);
-        std::string getUser();
+        std::string getUser() const;
         void        setActive(bool value);
         //void        setWrongPswd(bool value);
         //bool        getWrongPswd();

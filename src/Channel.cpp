@@ -1,0 +1,184 @@
+#include "../inc/Channel.hpp"
+
+// Constructors
+
+Channel::Channel() {
+	_max_users = -1;
+	_topic_restriction = false;
+	_invite_only = false;
+}
+
+Channel::Channel(const Channel& other) : _user_vector(other._user_vector), 
+_operators_vector(other._operators_vector), _name(other._name),
+_passwd(other._passwd), _topic(other._topic), _max_users(other._max_users), _invited_users(other._invited_users),
+_invite_only(other._invite_only), _topic_restriction(other._topic_restriction) {}
+
+Channel& Channel::operator=(const Channel& other)
+{
+	if (this != &other)
+	{
+		_name = other._name;
+		_user_vector = other._user_vector;
+		_operators_vector = other._operators_vector;
+		_invited_users = other._invited_users;
+		_passwd = other._passwd;
+		_topic = other._topic;
+		_max_users = other._max_users;
+		_topic_restriction = other._topic_restriction;
+		_invite_only = other._invite_only;
+	}
+	return *this;
+}
+
+Channel::Channel(std::string& name, std::string& passwd, User& creator, std::string& topic
+	, size_t max_users, bool invite_only, bool topic_restriction) : 
+	_name(name), _passwd(passwd), _topic(topic), _max_users(max_users)
+	, _invite_only(invite_only), _topic_restriction(topic_restriction)
+{
+	_user_vector.push_back(creator);
+	_operators_vector.push_back(creator);
+	std::cout << "Channel " << name << " created successfully!" << std::endl;
+}
+
+Channel::~Channel()
+{}
+
+// Getters
+
+std::vector<User> Channel::getUserVector() const
+{
+	std::vector<User> new_vect(_user_vector);
+	return new_vect;
+}
+
+std::vector<User> Channel::getUserOperatorsVector() const
+{
+	std::vector<User> new_vect(_operators_vector);
+	return new_vect;
+}
+
+std::string Channel::getName() const
+{
+	return _name;
+}
+
+bool 	Channel::getInviteOnly() const
+{
+	return _invite_only;
+}
+
+
+std::string	Channel::getTopic() const
+{
+	return _topic;
+}
+
+std::vector<User> Channel::getInvitedUsersVector() const
+{
+	return _invited_users;
+}
+
+size_t  Channel::getMaxUsers() const
+{
+	return _max_users;
+}
+
+bool    Channel::getTopicRestriction() const
+{
+	return _topic_restriction;
+}
+
+std::string Channel::getNickList() const
+{
+	std::string users_list;
+	for (size_t i = 0; i < _user_vector.size(); i++)
+		users_list += _user_vector[i].getNick() + " ";
+	return users_list;
+}
+
+// Setters
+
+void	Channel::setName(std::string& name)
+{
+	_name = name;
+}
+
+
+void	Channel::setTopic(std::string& topic)
+{
+	_topic = topic;  
+}
+
+void	Channel::setPassword(std::string &pass)
+{
+	_passwd = pass;
+}
+
+void	Channel::setMaxUsers(size_t num)
+{
+	_max_users = num;
+}
+
+void	Channel::setInviteOnly(bool set)
+{
+	_invite_only = set;
+}
+void	Channel::setTopicRestriction(bool set)
+{
+	_topic_restriction = set;
+}
+
+// Public Functions
+
+void	Channel::addUserToChannel(User& user, std::string& passwd)
+{
+	if (!_passwd.empty() && _passwd.compare(passwd) != 0)
+	{
+		std::string tmp(message_formatter(475, user.getNick(), _name, "Cannot join channel (+k)"));
+		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
+		return ;
+	}
+	if (isInVector(user, _user_vector))
+	{
+		std::string tmp(message_formatter(443, user.getNick(), _name, "is already on channel"));
+		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
+		return ;
+	}
+	if (_max_users < 0 && (_user_vector.size() + 1 >= _max_users))
+	{
+		std::string tmp(message_formatter(471, user.getNick(), _name, "Channel is full"));
+		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
+		return ;
+	}
+	else
+		_user_vector.push_back(user);
+}
+
+
+void	Channel::addUserToOperatorsVector(User& user, User& user_operator)
+{
+	if (!isInVector(user_operator, _operators_vector))
+	{
+		// 481 ERR_NOPRIVILEGES
+		std::string tmp(message_formatter(481, user_operator.getNick(), _name, "You're not an operator"));
+		send(user_operator.getFd(), tmp.c_str(), tmp.size(), 0);
+		return ;
+	}
+	else if (!isInVector(user, _user_vector))
+	{
+		std::string tmp(message_formatter(442, user.getNick(), _name, "You are not part of the channel"));
+		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
+		return ;
+	}
+	else
+		_operators_vector.push_back(user);
+}
+
+
+void Channel::writeToChannel(std::string& buffer) const
+{
+	for (std::vector<User>::const_iterator it = _user_vector.begin(); it != _user_vector.end(); ++it)
+	{
+		send(it->getFd(), buffer.c_str(), buffer.size(), 0);
+	}
+}
