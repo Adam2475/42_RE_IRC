@@ -67,11 +67,11 @@ class Channel
 		/////////////////////
 
 
-		// void modeInvite(std::string& arg);
-		// void modePassword(std::stringstream& oss, std::string& arg);
-		// void modeMaxUsers(std::stringstream& oss, std::string& arg);
-		// void modeOperator(std::stringstream& oss, User& user, std::string& arg);
-		// void modeTopic(std::stringstream& oss, std::string& arg);
+		void modeInvite(std::string& arg);
+		void modePassword(std::vector<std::string>& msg_parsed, std::string& arg);
+		int modeMaxUsers(std::vector<std::string>& msg_parsed, std::string& arg, User& user);
+		int modeOperator(std::string& arg, User& user, User* new_operator);
+		void modeTopic(std::string& arg);
 };
 
 #endif

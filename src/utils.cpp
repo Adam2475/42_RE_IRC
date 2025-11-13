@@ -141,3 +141,16 @@ std::string message_formatter(int error, const std::string& nickname, const std:
     msg = ":server " + err.str() + ' ' + nickname + ' ' + '#' + channel + " :" + message;
     return (msg);
 }
+
+bool	isStrNotPrintable(const char *str)
+{
+	if (!str)
+		return 1;
+	size_t size = strlen(str);
+	for (size_t i = 0; i < size; i++)
+	{
+		if (!std::isprint(static_cast<unsigned char>(str[i])) && str[i] != '\n' && str[i] != '\r')
+			return 1;
+	}
+	return 0;
+}

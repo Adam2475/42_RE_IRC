@@ -60,6 +60,7 @@ int		Server::channelAdder(std::string& channelName, User& user, std::string& pas
 void    Server::channelCreate(std::string& channelName, std::string& pass, User& user)
 {
 	std::string topic;
+	// name, pass, creator, topic, max users, invite_only, topic restriction
 	Channel new_channel(channelName, pass, user, topic, -1, 0, 0);
 	_channels.push_back(new_channel);
 	// Standard IRC Replies for successful channel creation and join
@@ -164,6 +165,7 @@ int Server::cmdJoin(std::vector<std::string>& mess, User &user)
 		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
 		return 1;
 	}
+	channelName = channelName.substr(1);
 	mess.erase(mess.begin());
 	if (mess.size())
 	{
@@ -176,7 +178,6 @@ int Server::cmdJoin(std::vector<std::string>& mess, User &user)
 	else if (result == 0)
 		return 0;
 	std::cout << channelName << " channel not found, creating..." << std::endl;
-	// name, pass, creator, topic, max users, invite_only, topic restriction
 	channelCreate(channelName, pass, user);
 	return 0;
 }
@@ -295,4 +296,101 @@ int		Server::cmdQuit(std::vector<std::string> parsed_message, User &user)
 	disconnectClient(user.getFd());
 
 	return (0);
+}
+
+int	Server::checkCmdMode(std::vector<std::string>& msg_parsed, User& user, Channel* targetChannel, std::string& channelName)
+{
+	if (targetChannel == NULL)
+	{
+		std::cout << RED << channelName << " no such channel" << RESET << std::endl;
+		std::string mode_err = message_formatter(403, user.getNick(), channelName, "No such channel");
+		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
+		return 1;
+	}
+	if (!isInVector(user, targetChannel->getUserOperatorsVector()))
+	{
+		std::cout << RED << user.getNick() << " not an operator" << RESET << std::endl;
+		std::string mode_err = message_formatter(482, user.getNick(), channelName, "You're not channel operator");
+		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
+		return 1;
+	}
+	msg_parsed.erase(msg_parsed.begin());
+	if (msg_parsed.size() == 0)
+	{
+		std::cout << RED << channelName << " flag not present" << RESET << std::endl;
+		std::string mode_err = "461 " + user.getNick() + " MODE: need more params";
+		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
+		return 1;
+	}
+	std::string flag = msg_parsed[0];
+	std::string mode[11] = {"+b", "+i", "-i", "+k", "-k", "+o", "-o", "+l", "-l", "+t", "-t"};
+	if (std::find(mode, mode+11, flag) == mode + 11)
+	{
+		std::cout << RED << channelName << " unknown flag" << RESET << std::endl;
+		std::string mode_err = "501 " + user.getNick() + " :Unknown MODE flag";
+		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
+		return 1;
+	}
+	return 0;
+}
+
+int Server::cmdMode(std::vector<std::string>& msg_parsed, User& user)
+{
+	std::cout << "detected command MODE" << std::endl;
+	msg_parsed.erase(msg_parsed.begin());
+	if (msg_parsed.size() == 0)
+	{
+		std::string mode_err = "461 " + user.getNick() + " MODE: need more params";
+		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
+		return 1;
+	}
+	std::string channelName = msg_parsed[0];
+	channelName = channelName.substr(1);
+	Channel *targetChannel = findChannelByName(channelName);
+	if (checkCmdMode(msg_parsed, user, targetChannel, channelName))
+		return 1;
+	std::string flag = msg_parsed[0];
+	if (flag[1] == 'i')
+		targetChannel->modeInvite(flag);
+	else if (flag[1] == 'k')
+		targetChannel->modePassword(msg_parsed, flag);
+	else if (flag[1] == 'l' && targetChannel->modeMaxUsers(msg_parsed, flag, user))
+		return 1;
+	else if (flag[1] == 'o')
+	{
+		if (msg_parsed.size() == 1)
+		{
+			std::cout << RED << channelName << " flag +o: user not inserted" << RESET << std::endl;
+			std::string mode_err = "461 " + user.getNick() + " MODE: need more params";
+			send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
+			return 1;
+		}
+		User* new_operator = findUserByNick(msg_parsed[1]);
+		if (new_operator == NULL)
+		{
+			std::string mode_err = user.getNick() + ' ' + msg_parsed[1] + " :No such nick";
+			send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
+			return 1;
+		}
+		if (targetChannel->modeOperator(flag, user, new_operator))
+			return 1;
+	}
+	else if (flag[1] == 't')
+		targetChannel->modeTopic(flag);
+	return 0;
+
+}
+
+User*	Server::findUserByNick(std::string targetNick)
+{
+	User* tmp = NULL;
+	for (std::vector<User>::iterator it = _users.begin(); it != _users.end(); ++it)
+	{
+		if (it->getNick() == targetNick)
+		{
+			*tmp = *it;
+			return (tmp);
+		}
+	}
+	return NULL;
 }

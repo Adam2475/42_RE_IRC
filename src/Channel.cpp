@@ -98,6 +98,11 @@ std::string Channel::getNickList() const
 
 // Setters
 
+void	Channel::setTopicRestriction(bool set)
+{
+	_topic_restriction = set;
+}
+
 void	Channel::setName(std::string& name)
 {
 	_name = name;
@@ -122,10 +127,6 @@ void	Channel::setMaxUsers(size_t num)
 void	Channel::setInviteOnly(bool set)
 {
 	_invite_only = set;
-}
-void	Channel::setTopicRestriction(bool set)
-{
-	_topic_restriction = set;
 }
 
 //////////////////////
@@ -180,7 +181,7 @@ void	Channel::addUserToChannel(User& user, std::string& passwd)
 		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
 		return ;
 	}
-	if (_max_users < 0 && (_user_vector.size() + 1 >= _max_users))
+	if (_max_users == static_cast<size_t>(-1) && (_user_vector.size() + 1 >= _max_users))
 	{
 		std::string tmp(message_formatter(471, user.getNick(), _name, "Channel is full"));
 		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
@@ -217,4 +218,88 @@ void Channel::writeToChannel(std::string& buffer) const
 	{
 		send(it->getFd(), buffer.c_str(), buffer.size(), 0);
 	}
+}
+
+// Mode commands
+
+void	Channel::modeInvite(std::string& arg)
+{	
+	std::cout << MAGENTA << "entro nel TOPIC mode" << RESET << std::endl;
+	if (arg[0] == '+')
+		setInviteOnly(true);
+	else if (arg[0] == '-')
+		setInviteOnly(false);
+}
+
+void	Channel::modePassword(std::vector<std::string>& msg_parsed, std::string& arg)
+{
+	std::cout << CYAN << "entro nel PASSWORD mode" << RESET << std::endl;
+	if (arg[0] == '-')
+	{
+		std::string empty;
+		setPassword(empty);
+	}
+	else if (arg[0] == '+')
+		setPassword(msg_parsed[1]);
+}
+
+int	Channel::modeMaxUsers(std::vector<std::string>& msg_parsed, std::string& arg, User& user)
+{
+	std::cout << YELLOW << "entro nel MAXUSERS mode" << RESET << std::endl;
+	if (arg[0] == '+' && msg_parsed.size() == 1)
+	{
+		std::cout << RED << _name << " flag +l: number not inserted" << RESET << std::endl;
+		std::string mode_err = "461 " + user.getNick() + " MODE: need more params";
+		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
+		return 1;
+	}
+	else if (arg[0] == '+')
+	{
+		int num = atoi(msg_parsed[1].c_str());
+		setMaxUsers(num);
+	}
+	else if (arg[0] == '-')
+		setMaxUsers(-1);
+	return 0;
+}
+
+int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
+{
+	std::cout << GREEN << "entro nell'OPERATORS mode" << RESET << std::endl;
+	if(std::find(_user_vector.begin(), _user_vector.end(), *new_operator) == _user_vector.end())
+	{
+		std::string mode_err = ":server 441" + user.getNick()
+		+ ' ' + new_operator->getNick()
+		+ ' ' + _name + " :They aren't on that channel";
+		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
+		return 1;
+	}
+	if (arg[0] == '-')
+	{
+		if (isInVector(*new_operator, _operators_vector))
+		{
+			_operators_vector.erase(std::find(_operators_vector.begin(), _operators_vector.end(), *new_operator));
+			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick();
+			writeToChannel(confirm);
+		}
+	}
+	else if (arg[0] == '+')
+	{
+		if (isInVector(*new_operator, _operators_vector))
+		{
+			addUserToOperatorsVector(*new_operator, user);
+			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick();
+			writeToChannel(confirm);
+		}
+	}
+	return 0;
+}
+
+void	Channel::modeTopic(std::string& arg)
+{
+	std::cout << BLUE << "entro nell'OPERATORS mode" << RESET << std::endl;
+	if (arg[0] == '-')
+		setTopicRestriction(false);
+	else if (arg[0] == '+')
+		setTopicRestriction(true);
 }

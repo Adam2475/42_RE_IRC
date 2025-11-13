@@ -147,6 +147,11 @@ int Server::check_commands(std::vector<std::string> parsed_message, User *sendin
 		cmdPart(parsed_message, *sending_user);
 		return (1);
 	}
+	if (parsed_message[0] == "MODE")
+	{
+		cmdMode(parsed_message, *sending_user);
+		return (1);
+	}
 	return (0);
 }
 
