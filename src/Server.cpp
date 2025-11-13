@@ -232,6 +232,35 @@ int Server::authenticate_user(std::vector<std::string> parsed_message, User *sen
 	return (0);
 }
 
+int Server::handle_commands(std::vector<std::string> parsed_message, User *sending_user)
+{
+	std::string out;
+
+	if (!sending_user->isActive())
+	{
+		if (authenticate_user(parsed_message, sending_user))
+			return (1);
+	}
+	else
+	{
+		if (check_already_registered(parsed_message, sending_user) || check_commands(parsed_message, sending_user))
+		{
+			return (1);
+		}
+		else
+		{
+			// ERR_UNKNOWNCOMMAND (421)
+			out += ":server 421";
+			out += sending_user->getNick() + " ";
+			out += parsed_message[0];
+			out += " :Unknown command";
+			out += "\r\n";
+			send(sending_user->getFd(), out.c_str(), out.size(), 0);
+		}
+	}
+	return (0);
+}
+
 int Server::check_already_registered(std::vector<std::string> parsed_message, User *sending_user)
 {
 	if (parsed_message[0] == "PASS" || parsed_message[0] == "USER")
@@ -335,32 +364,10 @@ void Server::start_main_loop()
                         if (line.empty())
                             continue;
 
-						std::vector<std::string> parsed_message;
-
-						parsed_message = parse_message(line);
-	
-						//printParsedMessage(parsed_message);
-	
-						// if (clearStrCRFL(tmp) == 1)
-						// 	continue ;
+						std::vector<std::string> parsed_message = parse_message(line);
 						
-						if (!sending_user->isActive())
-						{
-							if (authenticate_user(parsed_message, sending_user))
-								continue;
-						}
-						else
-						{
-							if (check_already_registered(parsed_message, sending_user) 
-								|| check_commands(parsed_message, sending_user))
-							{
-								continue;
-							}
-							else
-							{
-								std::cout << "command not found" << std::endl;
-							}
-						}
+						if (handle_commands(parsed_message, sending_user))
+							continue;
 					}
 					// save any remaining partial data back into the user's buffer
                     sending_user->_buffer = tmp;

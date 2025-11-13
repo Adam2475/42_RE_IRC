@@ -45,6 +45,7 @@ class Server
         ///////////////////
         // Commands
         ///////////////////
+        int handle_commands(std::vector<std::string> parsed_message, User *sending_user);
         int cmdJoin(std::vector<std::string>& mess, User &user);
         int cmdQuit(std::vector<std::string> parsed_message, User &user);
         int cmdPrivateMsg(std::vector<std::string> parsed_message, User &user);
