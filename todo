@@ -6,3 +6,15 @@
 - channel creation segfaults | OK
 - channel get created with an extra hash
 - implement "JOIN 0"
+
+
+
+////////////////////
+// Test Use Cases
+////////////////////
+
+PASS
+
+NICK
+
+USER

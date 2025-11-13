@@ -68,7 +68,7 @@ int Server::cmdPart(std::vector<std::string> parsed_message, User &user)
 
     // Remove the user from the channel's internal list
 	// moved reply message logic to partUser()
-    targetChannel->partUser(user, *targetChannel, reason);
+    targetChannel->partUser(user, *targetChannel, reason, PART);
 
     return 0;
 }
@@ -78,7 +78,7 @@ int Server::cmdJoin(std::vector<std::string>& mess, User &user)
 	std::string channelName;
 	std::string pass;
 
-	std::cout << "detected command JOIN" << mess[0] << std::endl;
+	//std::cout << "detected command JOIN" << mess[0] << std::endl;
 	mess.erase(mess.begin());
 	channelName = mess[0];
 	if (mess[0].empty())
@@ -330,36 +330,6 @@ int		Server::cmdTopic(std::vector<std::string> parsed_message, User &user)
 
 int		Server::cmdQuit(std::vector<std::string> parsed_message, User &user)
 {
-	std::string quit_msg;
-	std::string out;
-
-	if (parsed_message.size() == 2)
-	{
-		quit_msg = parsed_message[1];
-	}
-	else
-	{
-		quit_msg = ":Client Quit";
-	}
-
-	out += ":";
-	out += user.getNick();
-	out += " QUIT";
-	out += quit_msg;
-	out += "\r\n";
-	//  = ":" + quittingUser.getNickName() + " QUIT " + quit_msg + "\r\n";
-
-    // Erasing the user from all channels
-    // for (std::vector<Channel>::reverse_iterator it = _channels.rbegin(); it != _channels.rend(); ++it)
-    // {
-    //     if (isInVector(quittingUser, it->getUserVector()))
-    //     {
-    //         //it->writeToChannel(quittingUser, out);
-    //         it->partUser(quittingUser, *it, quit_msg);
-    //     }
-    // }
-
-	disconnectClient(user.getFd());
-
-	return (0);
+	std::string quit_msg = parsed_message.size() >= 2 ? parsed_message[1] : ":Client Quit";
+	return (disconnectClient(user.getFd(), quit_msg), 0);
 }

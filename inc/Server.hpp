@@ -30,7 +30,7 @@ class Server
         void        handle_new_connection(struct pollfd *tmp, int client_socket);
         User	    *getUserByFd(int clientSocket);
         User        findUserByNick(std::string targetNick);
-        void        disconnectClient(int clientSocket);
+        void        disconnectClient(int clientSocket, std::string quit_msg);
         int         authenticate_user(std::vector<std::string> parsed_message, User *sending_user);
         void        check_authentication(User *sending_user);
         int         check_already_registered(std::vector<std::string> parsed_message, User *sending_user);
@@ -38,6 +38,9 @@ class Server
 		int		    channelAdder(std::string& channelName, User& user, std::string& pass);
         void        channelCreate(std::string& channelName, std::string& pass, User& user);
         Channel*    findChannelByName(std::string channelName);
+        void        remove_from_user_vector(int clientSocket);
+        void        remove_from_pollfds(int clientSocket);
+        void        remove_user_from_channels(int clientSocket, std::string quit_msg);
 
         ///////////////////
         // Commands

@@ -18,7 +18,7 @@
 // #include "User.hpp"
 
 ///////////////
-/// Colors
+// Colors
 //////////////
 
 // --------- COLORI TESTO ---------
@@ -49,6 +49,16 @@
 // --------- RESET ---------
 #define RESET "\033[0m"
 
+// for telling part user which reply send to channels
+enum e_part
+{
+    QUIT,
+    PART,
+};
+
+//////////////////
+// Prototypes
+//////////////////
 
 bool                        is_numeric(const char *str);
 void                        invalid_port_error();

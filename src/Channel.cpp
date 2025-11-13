@@ -69,7 +69,6 @@ bool 	Channel::getInviteOnly() const
 	return _invite_only;
 }
 
-
 std::string	Channel::getTopic() const
 {
 	return _topic;
@@ -104,7 +103,6 @@ void	Channel::setName(std::string& name)
 {
 	_name = name;
 }
-
 
 void	Channel::setTopic(std::string& topic)
 {
@@ -153,9 +151,11 @@ void	Channel::showChannelTopic()
 	std::cout << topic << std::endl;
 }
 
-void	Channel::partUser(User& user, Channel &channel, std::string msg)
+void	Channel::partUser(User& user, Channel &channel, std::string msg, int mode)
 {
 	std::string channelName = channel.getName();
+	std::string user_prefix = user.getNick() + "!" + user.getUser() + "@";
+	std::string part_msg;
 
 	for (std::vector<User>::iterator it = _user_vector.begin(); it != _user_vector.end(); ++it)
 	{
@@ -176,11 +176,11 @@ void	Channel::partUser(User& user, Channel &channel, std::string msg)
 			}
 		}
 	}
-
-	// Build the compliant PART message with the user's full prefix
-	// get hostname probably not necessary
-    std::string user_prefix = user.getNick() + "!" + user.getUser() + "@"; // + user.getHostName();
-    std::string part_msg = ":" + user_prefix + " PART #" + channelName + " :" + msg + "\r\n";
+	
+	if (mode == PART) 
+		part_msg = ":" + user_prefix + " PART #" + channelName + " :" + msg + "\r\n";
+	else if (mode == QUIT)
+		part_msg = ":" + user_prefix + " QUIT" + " :" + msg + "\r\n";
 
     // Broadcast to all users in the channel (including the sender)
     channel.writeToChannel(part_msg);
