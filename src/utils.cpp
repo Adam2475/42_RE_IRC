@@ -1,6 +1,18 @@
 #include "../inc/header.hpp"
 #include "../inc/User.hpp"
 
+int removeInitialHash(std::string *target)
+{
+    if (target->find_first_of('#') == std::string::npos)
+        return (1);
+    else
+    {
+        // remove first element of array
+        target->erase(target->begin());
+        return (0);
+    }
+}
+
 int check_existing_user(std::vector<User> users, std::string username)
 {
 	std::vector<User>::iterator it;

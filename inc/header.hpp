@@ -62,5 +62,6 @@ std::vector<std::string>    parse_message(std::string buffer);
 int                         clearStrCRFL(std::string& received);
 void                        signalHandler(int sig);
 std::string                 message_formatter(int error, const std::string& nickname, const std::string& channel, const char* message);
+int                         removeInitialHash(std::string *target);
 
 #endif

@@ -2,80 +2,9 @@
 #include "../inc/Channel.hpp"
 #include "../inc/Server.hpp"
 
-
-std::string message_formatter2(int error, std::string command, const char* message)
-{
-	std::string msg;
-	std::ostringstream oss;
-	oss << error;
-	msg  = ":server" + oss.str() + ' ' + command + " :" + message;
-	return (msg);
-}
-
-int		Server::channelAdder(std::string& channelName, User& user, std::string& pass)
-{
-	std::vector<Channel>::iterator channelIterator = _channels.begin();
-	while (channelIterator != _channels.end())
-	{
-		std::cout << "searching trough channels" << std::endl;
-		if (channelName == channelIterator->getName())
-		{
-			if (channelIterator->getInviteOnly())
-			{
-				// TODO rimuovere prints per debug
-				std::cout << "channel found" << std::endl;
-				std::vector<User>::iterator x = std::find(channelIterator->getInvitedUsersVector().begin(), channelIterator->getInvitedUsersVector().end(), user);
-				if (x == channelIterator->getInvitedUsersVector().end())
-				{
-					std::cout << YELLOW;
-					std::cout << MAGENTA << x->getNick() << " " << x->getFd() << RESET << std::endl;
-					std::string tmp(message_formatter(473, user.getNick(), channelIterator->getName(), "Cannot join channel (+i)"));
-					send(user.getFd(), tmp.c_str(), tmp.size(), 0);
-					std::cout << RED << user.getNick() << " cannot join channel: invite only restriction" << RESET << std::endl;
-					return 1;
-				}
-				else
-					std::cout << BLUE << user.getNick() << " joined channel with restriction" << RESET << std::endl;
-			}
-			channelIterator->addUserToChannel(user, pass);
-			
-			// Standard IRC Replies for JOIN
-			std::string join_msg = ":" + user.getNick() + " JOIN #" + channelName + "\r\n";
-			channelIterator->writeToChannel(join_msg);
-			std::string topic_msg = ":server 332 " + user.getNick() + " #" + channelName + " :" + channelIterator->getTopic() + "\r\n";
-			send(user.getFd(), topic_msg.c_str(), topic_msg.size(), 0);
-			std::string users_list = channelIterator->getNickList();
-			std::string namreply_msg = ":server 353 " + user.getNick() + " = #" + channelName + " :" + users_list + "\r\n";
-			channelIterator->writeToChannel(namreply_msg);
-			std::string endofnames_msg = ":server 366 " + user.getNick() + " #" + channelName + " :End of /NAMES list.\r\n";
-			channelIterator->writeToChannel(endofnames_msg);
-			return (0);
-		}
-		++channelIterator;
-	}
-	return -1;
-	
-}
-
-void    Server::channelCreate(std::string& channelName, std::string& pass, User& user)
-{
-	std::string topic;
-	Channel new_channel(channelName, pass, user, topic, -1, 0, 0);
-	_channels.push_back(new_channel);
-	// Standard IRC Replies for successful channel creation and join
-    std::string join_msg = ":" + user.getNick() + " JOIN #" + channelName + "\r\n";
-    send(user.getFd(), join_msg.c_str(), join_msg.size(), 0);
-    std::string topic_msg = ":server 332 " + user.getNick() + " #" + channelName + " :" + topic + "\r\n";
-    send(user.getFd(), topic_msg.c_str(), topic_msg.size(), 0);
-    std::string namreply_msg = ":server 353 " + user.getNick() + " = #" + channelName + " :" + user.getNick() + "\r\n";
-    send(user.getFd(), namreply_msg.c_str(), namreply_msg.size(), 0);
-    std::string endofnames_msg = ":server 366 " + user.getNick() + " #" + channelName + " :End of /NAMES list.\r\n";
-    send(user.getFd(), endofnames_msg.c_str(), endofnames_msg.size(), 0);
-}
-
 int Server::cmdPart(std::vector<std::string> parsed_message, User &user)
 {
-    //User *user = getUserByFd(clientSocket);
+    //User *user = getUserByFd(user.getFd());
     // if (user.getNick().empty()) {
     //     return 1; // User not found
     // }
@@ -259,6 +188,144 @@ int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
 			send(_users[i].getFd(), out.c_str(), out.size(), 0);
 	}
     return (0);
+}
+
+int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
+{
+	std::string targetNick;
+	std::string channelName;
+	//oss >> targetNick >> channelName;
+
+	if (parsed_message.size() < 3)
+	{
+		std::string err = ":server 461 " + user.getNick() + " INVITE :Not enough parameters\r\n";
+	 	send(user.getFd(), err.c_str(), err.size(), 0);
+	 	return (1);				
+	}
+
+	targetNick = parsed_message[1];
+	channelName = parsed_message[2];
+
+	//User inviter = getUserByFd(clientSocket);
+	User targetUser = findUserByNick(targetNick);
+	if (channelName[0] == '#')
+	{
+        channelName = channelName.substr(1);
+    }
+	Channel *targetChannel = findChannelByName(channelName);
+
+	// if (targetNick.empty() || channelName.empty())
+	// {
+	// 	// ERR_NEEDMOREPARAMS (461)
+	// 	std::cout << "wrong number of arguments" << std::endl;
+	// 	return (1);
+	// }
+	
+	if (targetUser.getNick().empty())
+	{
+		std::cout << "user not found" << std::endl;
+		//"err 401"
+		return (1);
+	}
+
+	std::cout << "found user: " << targetUser.getNick() << std::endl;
+	std::cout << channelName << std::endl;
+
+	if (targetChannel == NULL)
+	{
+		std::cout << "channel not found" << std::endl;
+		// "err 403"
+		return (1);
+	}
+
+	// checks
+
+	// Check if inviter is on the channel
+    if (!isInVector(user, targetChannel->getUserVector())) {
+        std::string err = ":server 442 " + user.getNick() + " #" + channelName + " :You're not on that channel\r\n";
+        send(user.getFd(), err.c_str(), err.size(), 0);
+        return 1;
+    }
+
+	// Check if target is already on the channel
+    if (isInVector(targetUser, targetChannel->getUserVector())) {
+        std::string err = ":server 443 " + user.getNick() + " " + targetNick + " #" + channelName + " :is already on channel\r\n";
+        send(user.getFd(), err.c_str(), err.size(), 0);
+        return 1;
+    }
+
+	// send invite
+	targetChannel->addToInvited(targetUser);
+
+	// Send RPL_INVITING to user
+    std::string inviting_msg = ":server 341 " + user.getNick() + " " + targetNick + " #" + channelName + "\r\n";
+    send(user.getFd(), inviting_msg.c_str(), inviting_msg.size(), 0);
+
+    // Send INVITE to target user
+    std::string invite_msg = ":" + user.getNick() + " INVITE " + targetNick + " :#" + channelName + "\r\n";
+    send(targetUser.getFd(), invite_msg.c_str(), invite_msg.size(), 0);
+
+
+	return (0);
+}
+
+int		Server::cmdTopic(std::vector<std::string> parsed_message, User &user)
+{
+	std::string channel_name;
+	//oss >> channel_name;
+	std::cout << "detected command TOPIC" << std::endl;
+	std::string arg2;
+	//oss >> arg2;
+	//User targetUser = getUserByFd(clientSocket);
+
+	if (parsed_message.size() < 2)
+	{
+		std::string err = ":server 461 " + user.getNick() + " TOPIC :Not enough parameters\r\n";
+	 	send(user.getFd(), err.c_str(), err.size(), 0);
+	 	return (1);						
+	}
+
+	channel_name = parsed_message[1];
+
+	if (channel_name.empty())
+	{
+		std::cout << "fatal error, no channel topic" << std::endl;
+		return (1);
+	}
+	std::cout << channel_name << std::endl;
+
+	if (removeInitialHash(&channel_name))
+	{
+		std::cout << "bad formatted arguments, need channel" << std::endl;
+	}
+	else
+	{
+		std::cout << "hash removed correctly" << std::endl;
+		std::cout << channel_name << std::endl;
+	}
+
+	Channel *targetChannel = findChannelByName(channel_name);
+	if (!targetChannel)
+	{
+		std::cout << "fatal error, no channel found" << std::endl;
+		exit(1);
+	}
+	targetChannel->showChannelTopic();
+
+	if (!arg2.empty())
+	{
+		if (targetChannel->isOperatorUser(user))
+		{
+			std::cout << "user is operator, TOPIC operation allowed" << std::endl;
+			targetChannel->setTopic(arg2);
+		}
+		else
+		{
+			std::cout << "User is not operator, operation aborted" << std::endl;
+			return (1);
+		}
+	}
+	return (0);
 }
 
 int		Server::cmdQuit(std::vector<std::string> parsed_message, User &user)

@@ -8,13 +8,12 @@
 class Server
 {
     private:
-        unsigned short      _port;
-        std::string         _password;
-        int                 _serv_fd;
-        // vector of fds that will be checked by poll
-        std::vector<pollfd> _poll_fds;
-        std::vector<User>   _users;
-        std::vector<Channel>   _channels;
+        unsigned short          _port;
+        std::string             _password;
+        int                     _serv_fd;
+        std::vector<pollfd>     _poll_fds;
+        std::vector<User>       _users;
+        std::vector<Channel>    _channels;
     public:
         ///////////////////
         // Constructors
@@ -30,8 +29,8 @@ class Server
         void        start_main_loop();
         void        handle_new_connection(struct pollfd *tmp, int client_socket);
         User	    *getUserByFd(int clientSocket);
+        User        findUserByNick(std::string targetNick);
         void        disconnectClient(int clientSocket);
-        // void    shutdown_server();
         int         authenticate_user(std::vector<std::string> parsed_message, User *sending_user);
         void        check_authentication(User *sending_user);
         int         check_already_registered(std::vector<std::string> parsed_message, User *sending_user);
@@ -47,6 +46,10 @@ class Server
         int cmdQuit(std::vector<std::string> parsed_message, User &user);
         int cmdPrivateMsg(std::vector<std::string> parsed_message, User &user);
         int cmdPart(std::vector<std::string> parsed_message, User &user);
+        int cmdInvite(std::vector<std::string> parsed_message, User &user);
+        int cmdTopic(std::vector<std::string> parsed_message, User &user);
 };
+
+std::string message_formatter2(int error, std::string command, const char* message);
 
 #endif

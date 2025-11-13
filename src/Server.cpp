@@ -29,6 +29,20 @@ Server::~Server() {}
 //     }
 // }
 
+User	Server::findUserByNick(std::string targetNick)
+{
+	User targetUser;
+    for (size_t i = 0; i < _users.size(); ++i)
+	{
+        if (_users[i].getNick() == targetNick)
+		{
+            targetUser = _users[i];
+            break;
+        }
+    }
+	return targetUser;
+}
+
 void Server::disconnectClient(int clientSocket)
 {
 	User *quittingUser = getUserByFd(clientSocket);
@@ -147,7 +161,12 @@ int Server::check_commands(std::vector<std::string> parsed_message, User *sendin
 		cmdPart(parsed_message, *sending_user);
 		return (1);
 	}
-	return (0);
+	if (parsed_message[0] == "INVITE")
+	{
+		cmdInvite(parsed_message, *sending_user);
+		return (1);
+	}
+	return (0); 
 }
 
 int Server::authenticate_user(std::vector<std::string> parsed_message, User *sending_user)

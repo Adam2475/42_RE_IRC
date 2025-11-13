@@ -1,6 +1,8 @@
 #include "../inc/Channel.hpp"
 
+//////////////////
 // Constructors
+//////////////////
 
 Channel::Channel() {
 	_max_users = -1;
@@ -131,6 +133,25 @@ void	Channel::setTopicRestriction(bool set)
 //////////////////////
 // Public Functions
 //////////////////////
+
+void Channel::addToInvited(User& user)
+{
+    if (!isInVector(user, _invited_users))
+    {
+        _invited_users.push_back(user);
+    }
+}
+
+bool	Channel::isOperatorUser(User target_user) const
+{
+	return (isInVector(target_user, _operators_vector) ? true : false);
+}
+
+void	Channel::showChannelTopic()
+{
+	std::string topic = getTopic();
+	std::cout << topic << std::endl;
+}
 
 void	Channel::partUser(User& user, Channel &channel, std::string msg)
 {
