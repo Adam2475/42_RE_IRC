@@ -43,6 +43,7 @@ class Server
         void        remove_from_user_vector(int clientSocket);
         void        remove_from_pollfds(int clientSocket);
         void        remove_user_from_channels(int clientSocket, std::string quit_msg);
+		void		join_message_confirm(User &user, Channel& channel) const;
 
 		///////////////////
 		// Commands

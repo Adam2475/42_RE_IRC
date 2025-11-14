@@ -27,6 +27,29 @@ void    Server::channelCreate(std::string& channelName, std::string& pass, User&
     send(user.getFd(), endofnames_msg.c_str(), endofnames_msg.size(), 0);
 }
 
+void		Server::join_message_confirm(User &user, Channel& channel) const
+{
+	// Standard IRC Replies for JOIN
+	std::string join_msg = ":" + user.getNick() + " JOIN #" + channel.getName() + "\r\n";
+	channel.writeToChannel(join_msg);
+	std::string topic_msg = ":server 332 " + user.getNick() + " #" + channel.getName() + " :" + channel.getTopic() + "\r\n";
+	send(user.getFd(), topic_msg.c_str(), topic_msg.size(), 0);
+	std::string users_list = channel.getNickList();
+	std::string namreply_msg = ":server 353 " + user.getNick() + " = #" + channel.getName() + " :" + users_list + "\r\n";
+	channel.writeToChannel(namreply_msg);
+	std::string endofnames_msg = ":server 366 " + user.getNick() + " #" + channel.getName() + " :End of /NAMES list.\r\n";
+	channel.writeToChannel(endofnames_msg);
+}
+
+
+void print_vec(std::vector<User>& parsed_message)
+{
+	for (size_t i = 0; i < parsed_message.size(); i++)
+	{
+		std::cout << parsed_message[i].getNick() << ' ' << parsed_message[i].getFd() << ' ' << i << std::endl;
+	}
+}
+
 int		Server::channelAdder(std::string& channelName, User& user, std::string& pass)
 {
 	std::vector<Channel>::iterator channelIterator = _channels.begin();
@@ -41,21 +64,27 @@ int		Server::channelAdder(std::string& channelName, User& user, std::string& pas
 			{
 				if (channelIterator->getInvitedUsersVector().size() > 0)
 				{
-					std::vector<User>::iterator x = std::find(channelIterator->getInvitedUsersVector().begin(), channelIterator->getInvitedUsersVector().end(), user);
-					if (x == channelIterator->getInvitedUsersVector().end())
+					std::vector<User> invited_vect = channelIterator->getInvitedUsersVector();
+					for (size_t i = 0; i <= channelIterator->getInvitedUsersVector().size(); i++)
 					{
-						std::cout << MAGENTA << x->getNick() << " " << x->getFd() << RESET << std::endl;
-						std::string tmp(message_formatter(473, user.getNick(), channelIterator->getName(), "Cannot join channel (+i)"));
-						send(user.getFd(), tmp.c_str(), tmp.size(), 0);
-						std::cout << RED << user.getNick() << " cannot join channel: invite only restriction" << RESET << std::endl;
-						return 1;
+						if (invited_vect[i] == user)
+						{
+							channelIterator->addUserToChannel(user, pass);
+							join_message_confirm(user, *channelIterator);
+							return (0);
+						}
+						else
+						{
+							std::string tmp(message_formatter(473, user.getNick(), channelIterator->getName(), "Cannot join channel (+i)"));
+							send(user.getFd(), tmp.c_str(), tmp.size(), 0);
+							std::cout << RED << user.getNick() << " cannot join channel: invite only restriction" << RESET << std::endl;
+							return 1;
+						}
 					}
-					else
-						std::cout << BLUE << user.getNick() << " joined channel with restriction" << RESET << std::endl;
 				}
 				else
 				{
-					std::cout << MAGENTA << user.getNick() << " no invited users " << user.getFd() << RESET << std::endl;
+					std::cout << MAGENTA << user.getNick() << " :No invited users are present" << RESET << std::endl;
 					std::string tmp(message_formatter(473, user.getNick(), channelIterator->getName(), "Cannot join channel (+i)"));
 					send(user.getFd(), tmp.c_str(), tmp.size(), 0);
 					std::cout << RED << user.getNick() << " cannot join channel: invite only restriction" << RESET << std::endl;
@@ -63,17 +92,7 @@ int		Server::channelAdder(std::string& channelName, User& user, std::string& pas
 				}
 			}
 			channelIterator->addUserToChannel(user, pass);
-			
-			// Standard IRC Replies for JOIN
-			std::string join_msg = ":" + user.getNick() + " JOIN #" + channelName + "\r\n";
-			channelIterator->writeToChannel(join_msg);
-			std::string topic_msg = ":server 332 " + user.getNick() + " #" + channelName + " :" + channelIterator->getTopic() + "\r\n";
-			send(user.getFd(), topic_msg.c_str(), topic_msg.size(), 0);
-			std::string users_list = channelIterator->getNickList();
-			std::string namreply_msg = ":server 353 " + user.getNick() + " = #" + channelName + " :" + users_list + "\r\n";
-			channelIterator->writeToChannel(namreply_msg);
-			std::string endofnames_msg = ":server 366 " + user.getNick() + " #" + channelName + " :End of /NAMES list.\r\n";
-			channelIterator->writeToChannel(endofnames_msg);
+			join_message_confirm(user, *channelIterator);			
 			return (0);
 		}
 		++channelIterator;
