@@ -2,6 +2,18 @@
 // #include "../inc/Channel.hpp"
 #include "../inc/Server.hpp"
 
+User*	Server::findUserByNick(std::string& targetNick)
+{
+	for (std::vector<User>::iterator it = _users.begin(); it != _users.end(); ++it)
+	{
+		if (it->getNick() == targetNick)
+		{
+			return &(*it);
+		}
+	}
+	return NULL;
+}
+
 size_t Server::findChannelIndex(std::string target)
 {
 	size_t i = 0;

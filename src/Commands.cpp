@@ -20,14 +20,8 @@ int Server::cmdPing(std::vector<std::string> parsed_message, User &user)
 
 int Server::cmdPart(std::vector<std::string> parsed_message, User &user)
 {
-    //User *user = getUserByFd(user.getFd());
-    // if (user.getNick().empty()) {
-    //     return 1; // User not found
-    // }
-	// reference always initialized
-
     std::string channelName;
-    // oss >> channelName;
+	std::string reason;
 
     if (parsed_message.size() < 2)
     {
@@ -60,29 +54,7 @@ int Server::cmdPart(std::vector<std::string> parsed_message, User &user)
         return 1;
     }
 
-	std::string reason;
-	if (parsed_message.size() == 3)
-	{
-		reason = parsed_message[2];
-	}
-	else
-	{
-		reason = "Leaving";
-	}
-
-    // Correctly parse the multi-word reason
-    // std::getline(oss, reason);
-    // if (!reason.empty() && reason[0] == ' ') {
-    //     reason = reason.substr(1);
-    // }
-    // if (!reason.empty() && reason[0] == ':'){
-    //     reason = reason.substr(1);
-    // } else if (reason.empty()) {
-    //     reason = "Leaving"; // Default reason
-    // }
-
-    // Remove the user from the channel's internal list
-	// moved reply message logic to partUser()
+	reason = parsed_message.size() == 3 ? parsed_message[2] : "Leaving";
     targetChannel->partUser(user, *targetChannel, reason, PART);
 
     return 0;
@@ -407,18 +379,6 @@ int Server::cmdMode(std::vector<std::string>& msg_parsed, User& user)
 		targetChannel->modeTopic(flag);
 	return 0;
 
-}
-
-User*	Server::findUserByNick(std::string& targetNick)
-{
-	for (std::vector<User>::iterator it = _users.begin(); it != _users.end(); ++it)
-	{
-		if (it->getNick() == targetNick)
-		{
-			return &(*it);
-		}
-	}
-	return NULL;
 }
 
 int		Server::cmdQuit(std::vector<std::string> parsed_message, User &user)

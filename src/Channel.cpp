@@ -45,7 +45,9 @@ Channel::Channel(std::string& name, std::string& passwd, User& creator, std::str
 Channel::~Channel()
 {}
 
+/////////////
 // Getters
+/////////////
 
 std::vector<User> Channel::getUserVector() const
 {
@@ -97,7 +99,9 @@ std::string Channel::getNickList() const
 	return users_list;
 }
 
+/////////////
 // Setters
+/////////////
 
 void	Channel::setTopicRestriction(bool set)
 {
@@ -178,7 +182,7 @@ void	Channel::partUser(User& user, Channel &channel, std::string msg, int mode)
 		}
 	}
 	
-	if (mode == PART) 
+	if (mode == PART)
 		part_msg = ":" + user_prefix + " PART #" + channelName + " :" + msg + "\r\n";
 	else if (mode == QUIT)
 		part_msg = ":" + user_prefix + " QUIT" + " :" + msg + "\r\n";

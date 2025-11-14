@@ -21,6 +21,7 @@ class Channel
 		bool		_topic_restriction;
 
 		// add no external messages MODE
+		// ERR_CANNOTSENDTOCHAN (404)
 		
 	public:
 		Channel();
