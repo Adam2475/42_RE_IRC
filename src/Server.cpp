@@ -15,19 +15,19 @@ Server::~Server() {}
 // Public Methods
 ////////////////////////
 
-User	Server::findUserByNick(std::string targetNick)
-{
-	User targetUser;
-    for (size_t i = 0; i < _users.size(); ++i)
-	{
-        if (_users[i].getNick() == targetNick)
-		{
-            targetUser = _users[i];
-            break;
-        }
-    }
-	return targetUser;
-}
+// User*	Server::findUserByNick(std::string targetNick)
+// {
+// 	User targetUser;
+//     for (size_t i = 0; i < _users.size(); ++i)
+// 	{
+//         if (_users[i].getNick() == targetNick)
+// 		{
+//             targetUser = _users[i];
+//             break;
+//         }
+//     }
+// 	return targetUser;
+// }
 
 void Server::remove_from_pollfds(int clientSocket)
 {

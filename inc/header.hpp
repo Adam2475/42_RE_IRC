@@ -15,7 +15,8 @@
 // #include <fcntl.h>
 #include <csignal>
 // header should only be included elswhere for prototypes
-#include "User.hpp"
+class User;
+class Channel;
 
 ///////////////
 // Colors

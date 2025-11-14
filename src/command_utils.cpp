@@ -1,5 +1,5 @@
 #include "../inc/header.hpp"
-#include "../inc/Channel.hpp"
+// #include "../inc/Channel.hpp"
 #include "../inc/Server.hpp"
 
 std::string message_formatter2(int error, std::string command, const char* message)
@@ -35,22 +35,32 @@ int		Server::channelAdder(std::string& channelName, User& user, std::string& pas
 		std::cout << "searching trough channels" << std::endl;
 		if (channelName == channelIterator->getName())
 		{
+			// TODO rimuovere prints per debug
+			std::cout << "channel found" << std::endl;
 			if (channelIterator->getInviteOnly())
 			{
-				// TODO rimuovere prints per debug
-				std::cout << "channel found" << std::endl;
-				std::vector<User>::iterator x = std::find(channelIterator->getInvitedUsersVector().begin(), channelIterator->getInvitedUsersVector().end(), user);
-				if (x == channelIterator->getInvitedUsersVector().end())
+				if (channelIterator->getInvitedUsersVector().size() > 0)
 				{
-					std::cout << YELLOW;
-					std::cout << MAGENTA << x->getNick() << " " << x->getFd() << RESET << std::endl;
+					std::vector<User>::iterator x = std::find(channelIterator->getInvitedUsersVector().begin(), channelIterator->getInvitedUsersVector().end(), user);
+					if (x == channelIterator->getInvitedUsersVector().end())
+					{
+						std::cout << MAGENTA << x->getNick() << " " << x->getFd() << RESET << std::endl;
+						std::string tmp(message_formatter(473, user.getNick(), channelIterator->getName(), "Cannot join channel (+i)"));
+						send(user.getFd(), tmp.c_str(), tmp.size(), 0);
+						std::cout << RED << user.getNick() << " cannot join channel: invite only restriction" << RESET << std::endl;
+						return 1;
+					}
+					else
+						std::cout << BLUE << user.getNick() << " joined channel with restriction" << RESET << std::endl;
+				}
+				else
+				{
+					std::cout << MAGENTA << user.getNick() << " no invited users " << user.getFd() << RESET << std::endl;
 					std::string tmp(message_formatter(473, user.getNick(), channelIterator->getName(), "Cannot join channel (+i)"));
 					send(user.getFd(), tmp.c_str(), tmp.size(), 0);
 					std::cout << RED << user.getNick() << " cannot join channel: invite only restriction" << RESET << std::endl;
 					return 1;
 				}
-				else
-					std::cout << BLUE << user.getNick() << " joined channel with restriction" << RESET << std::endl;
 			}
 			channelIterator->addUserToChannel(user, pass);
 			

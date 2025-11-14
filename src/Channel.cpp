@@ -245,7 +245,7 @@ void Channel::writeToChannel(std::string& buffer) const
 
 void	Channel::modeInvite(std::string& arg)
 {	
-	std::cout << MAGENTA << "entro nel TOPIC mode" << RESET << std::endl;
+	std::cout << MAGENTA << "entro nel INVITE mode" << RESET << std::endl;
 	if (arg[0] == '+')
 		setInviteOnly(true);
 	else if (arg[0] == '-')

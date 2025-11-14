@@ -12,20 +12,6 @@ int removeInitialHash(std::string *target)
     }
 }
 
-int check_existing_user(std::vector<User> users, std::string username)
-{
-	std::vector<User>::iterator it;
-	for (it = users.begin(); it != users.end(); it++)
-	{
-		if (it->getNick() == username)
-		{
-			std::cout << "username: " << username << " checked nick: " << it->getNick() << std::endl;
-			return (1);
-		}
-	}
-	return (0);
-}
-
 int	clearStrCRFL(std::string& received)
 {
 	if (received.empty())
@@ -132,17 +118,6 @@ bool is_numeric(const char *str)
     }
     return (false);
 }
-
-bool	isInVector(User& user, const std::vector<User>& vector)
-{
-	for (size_t i = 0; i < vector.size(); i++)
-	{
-		if (vector[i] == user)
-			return 1;
-	}
-	return 0;	
-}
-
 
 std::string message_formatter(int error, const std::string& nickname, const std::string& channel, const char* message)
 {

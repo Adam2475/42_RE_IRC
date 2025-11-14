@@ -76,3 +76,28 @@ bool User::operator==(const User& other) const
 		return 1;
 	return 0;
 }
+
+
+int check_existing_user(std::vector<User> users, std::string username)
+{
+	std::vector<User>::iterator it;
+	for (it = users.begin(); it != users.end(); it++)
+	{
+		if (it->getNick() == username)
+		{
+			std::cout << "username: " << username << " checked nick: " << it->getNick() << std::endl;
+			return (1);
+		}
+	}
+	return (0);
+}
+
+bool	isInVector(User& user, const std::vector<User>& vector)
+{
+	for (size_t i = 0; i < vector.size(); i++)
+	{
+		if (vector[i] == user)
+			return 1;
+	}
+	return 0;	
+}

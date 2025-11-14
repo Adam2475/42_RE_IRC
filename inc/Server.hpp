@@ -3,6 +3,7 @@
 
 #include "header.hpp"
 #include "Channel.hpp"
+#include "User.hpp"
 
 class Server
 {
@@ -28,8 +29,10 @@ class Server
 		void        server_start();
 		void        start_main_loop();
 		void        handle_new_connection(struct pollfd *tmp, int client_socket);
+        int         handle_commands(std::vector<std::string> parsed_message, User *sending_user);
 		User	    *getUserByFd(int clientSocket);
-		void        disconnectClient(int clientSocket);
+        void        disconnectClient(int clientSocket, std::string quit_msg);
+        
 		// void    shutdown_server();
 		int         authenticate_user(std::vector<std::string> parsed_message, User *sending_user);
 		void        check_authentication(User *sending_user);
@@ -39,7 +42,7 @@ class Server
 		void        channelCreate(std::string& channelName, std::string& pass, User& user);
 		Channel*    findChannelByName(std::string channelName);
 		int			checkCmdMode(std::vector<std::string>& msg_parsed, User& user, Channel* targetChannel, std::string& channelName);
-		User*		findUserByNick(std::string targetNick);
+		User*		findUserByNick(std::string& targetNick);
         void        remove_from_user_vector(int clientSocket);
         void        remove_from_pollfds(int clientSocket);
         void        remove_user_from_channels(int clientSocket, std::string quit_msg);

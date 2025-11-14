@@ -1,6 +1,7 @@
 #ifndef CHANNEL_HPP
 # define CHANNEL_HPP
 # include "header.hpp"
+# include "User.hpp"
 
 class Channel
 {
