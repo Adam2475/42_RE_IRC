@@ -189,14 +189,6 @@ int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
     return (0);
 }
 
-void print_vec(std::vector<std::string>& parsed_message)
-{
-	for (size_t i = 0; i < parsed_message.size(); i++)
-	{
-		std::cout << parsed_message[i] << std::endl;
-	}
-}
-
 int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
 {
 	std::string targetNick;
@@ -325,6 +317,7 @@ int		Server::cmdTopic(std::vector<std::string> parsed_message, User &user)
 	}
 	targetChannel->showChannelTopic();
 
+	// TODO aggiungere controllo per il topic restriction del channel
 	if (!arg2.empty())
 	{
 		if (targetChannel->isOperatorUser(user))
