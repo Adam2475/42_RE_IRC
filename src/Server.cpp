@@ -264,8 +264,8 @@ int Server::handle_commands(std::vector<std::string> parsed_message, User *sendi
 			out += parsed_message[0];
 			out += " :Unknown command";
 			out += "\r\n";
+			std::cout << parsed_message[0] << " :Command not found" << std::endl;
 			send(sending_user->getFd(), out.c_str(), out.size(), 0);
-			std::
 		}
 	}
 	return (0);

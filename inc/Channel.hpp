@@ -19,6 +19,8 @@ class Channel
 		// MODE necessities
 		bool		_invite_only;
 		bool		_topic_restriction;
+
+		// add no external messages MODE
 		
 	public:
 		Channel();

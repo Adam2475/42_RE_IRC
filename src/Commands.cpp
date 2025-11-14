@@ -3,7 +3,7 @@
 
 int Server::cmdPing(std::vector<std::string> parsed_message, User &user)
 {
-	std::cout << "PING received" << std::endl;
+	//std::cout << "PING received" << std::endl;
 	if (parsed_message.size() < 2)
 	{
 		std::string msg = ":server 461 " + user.getNick() + " PING :Not enough parameters\r\n";
@@ -130,7 +130,9 @@ int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
 	std::string targetsToken;
 	std::string msgBody;
 	std::string target;
-	std::stringstream tss(targetsToken);
+	std::stringstream tss;
+	bool is_channel = false;
+	size_t i = 0;
 	
 	if (parsed_message.size() < 3)
 	{
@@ -142,65 +144,39 @@ int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
 	{
 		targetsToken = parsed_message[1];
 		msgBody = parsed_message[2];
+		tss.str(targetsToken);
 	}
 
 	while (std::getline(tss, target, ','))
 	{
-		bool is_channel = false;
 		if (target.empty())
 			return (1);
-		size_t i = 0;
  
 		if (target[0] == '#')
 		{
 			is_channel = true;
-			std::cout << "channels_no: " << _channels.size() << " i: " << i << std::endl;
 			std::string channelName = target.substr(1);
-			while (i < _channels.size())
-			{
-				std::cout << "channel: " << _channels[i].getName() << " i: " << i << std::endl;
-				if (_channels[i].getName() == channelName)
-				{
-					// recipFd = _users[ui].getFd();
-					break;
-				}
-				i++;
-			}
+			i = findChannelIndex(channelName);
 			if (i == _channels.size())
 			{
-				//std::string err = "401 " + findNickName(clientSocket) + " " + singleTarget + " :No such nick/channel\r\n";
-				//send(clientSocket, err.c_str(), err.size(), 0);
-				std::cerr << "channel not found" << std::endl;
+				std::string err = ":server 402 " + user.getNick() + " " + target + " :No such channel\r\n";
+				send(user.getFd(), err.c_str(), err.size(), 0);
 				return (1);
 			}
 		}
 		else
 		{
-			while (i < _users.size())
-			{
-				if (_users[i].getNick() == target)
-				{
-					// recipFd = _users[ui].getFd();
-					break;
-				}
-				i++;
-			}
+			i = findUserIndex(target);
 			if (i == _users.size())
 			{
-				//std::string err = "401 " + findNickName(clientSocket) + " " + singleTarget + " :No such nick/channel\r\n";
-				//send(clientSocket, err.c_str(), err.size(), 0);
-				std::cerr << "user not found" << std::endl;
+				std::string err = ":server 401 " + user.getNick() + " " + target + " :There was no such nickname\r\n";
+				send(user.getFd(), err.c_str(), err.size(), 0);
 				return (1);
 			}
 		}
-		// poll_fds[recipFd]
-		// build and send the PRIVMSG to the recipient
-		std::string out = ":" + user.getNick() + " PRIVMSG " + target + " :" + msgBody + "\r\n";
 
-		if (is_channel)
-			_channels[i].writeToChannel(out);
-		else
-			send(_users[i].getFd(), out.c_str(), out.size(), 0);
+		std::string out = ":" + user.getNick() + " PRIVMSG " + target + " :" + msgBody + "\r\n";
+		is_channel ? _channels[i].writeToChannel(out) : (void)send(_users[i].getFd(), out.c_str(), out.size(), 0);
 	}
     return (0);
 }

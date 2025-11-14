@@ -2,6 +2,30 @@
 // #include "../inc/Channel.hpp"
 #include "../inc/Server.hpp"
 
+size_t Server::findChannelIndex(std::string target)
+{
+	size_t i = 0;
+	while (i < _channels.size())
+	{
+		if (_channels[i].getName() == target)
+			break;
+		i++;
+	}
+	return (i);
+}
+
+size_t Server::findUserIndex(std::string target)
+{
+	size_t i = 0;
+	while (i < _users.size())
+	{
+		if (_users[i].getNick() == target)
+			break;
+		i++;
+	}	
+	return (i);
+}
+
 std::string message_formatter2(int error, std::string command, const char* message)
 {
 	std::string msg;

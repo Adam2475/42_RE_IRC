@@ -4,10 +4,11 @@
 - check already existing nicknames | OK
 - check existing usernames
 - channel creation segfaults | OK
-- channel get created with an extra hash
+- channel get created with an extra hash | OK
 - implement "JOIN 0"
+- add check if part of the channel to PRIVMSG
 
-
+// when no external messages mode set
 
 ////////////////////
 // Test Use Cases
