@@ -15,36 +15,22 @@ Server::~Server() {}
 // Public Methods
 ////////////////////////
 
-// static void printParsedMessage(const std::vector<std::string> &parsed_message)
-// {
-//     if (parsed_message.empty())
-//     {
-//         std::cout << "[parsed_message] <empty>\n";
-//         return;
-//     }
-//     std::cout << "[parsed_message] (" << parsed_message.size() << " tokens):\n";
-//     for (size_t i = 0; i < parsed_message.size(); ++i)
-//     {
-//         std::cout << "  [" << i << "] \"" << parsed_message[i] << "\"\n";
-//     }
-// }
-
-void Server::disconnectClient(int clientSocket)
+User	Server::findUserByNick(std::string targetNick)
 {
-	User *quittingUser = getUserByFd(clientSocket);
-	//std::string out;
-
-	//out = ":" + user_prefix + " PART #" + channelName + " :" + msg + "\r\n";
-	// Erase the user from all channels and notify members
-    for (std::vector<Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+	User targetUser;
+    for (size_t i = 0; i < _users.size(); ++i)
 	{
-        if (isInVector(*quittingUser, it->getUserVector()))
+        if (_users[i].getNick() == targetNick)
 		{
-            // /it->writeToChannel(out);
-            it->partUser(*quittingUser, *it, "disconnecting");
+            targetUser = _users[i];
+            break;
         }
     }
+	return targetUser;
+}
 
+void Server::remove_from_pollfds(int clientSocket)
+{
 	for (size_t i = 0; i < _poll_fds.size(); ++i)
 	{
         if (_poll_fds[i].fd == clientSocket)
@@ -54,8 +40,10 @@ void Server::disconnectClient(int clientSocket)
             break;
         }
     }
+}
 
-    // Remove user from _users vector
+void Server::remove_from_user_vector(int clientSocket)
+{
     for (size_t i = 0; i < _users.size(); ++i)
 	{
         if (_users[i].getFd() == clientSocket)
@@ -63,9 +51,25 @@ void Server::disconnectClient(int clientSocket)
             _users.erase(_users.begin() + i);
             break;
         }
-    }
+    }	
+}
 
-	std::cout << "Client " << clientSocket << ") disconnected." << std::endl;
+void Server::remove_user_from_channels(int clientSocket, std::string quit_msg)
+{
+	User *quittingUser = getUserByFd(clientSocket);
+
+    for (std::vector<Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+	{
+        if (isInVector(*quittingUser, it->getUserVector()))
+            it->partUser(*quittingUser, *it, quit_msg, QUIT);
+    }	
+}
+
+void Server::disconnectClient(int clientSocket, std::string quit_msg)
+{
+	remove_user_from_channels(clientSocket, quit_msg);
+	remove_from_pollfds(clientSocket);
+	remove_from_user_vector(clientSocket);
 }
 
 User *Server::getUserByFd(int clientSocket)
@@ -105,7 +109,6 @@ Channel*	Server::findChannelByName(std::string channelName)
             return &(*it);
         }
     }
-	// channel not found
 	return NULL;
 }
 
@@ -145,6 +148,11 @@ int Server::check_commands(std::vector<std::string> parsed_message, User *sendin
 	if (parsed_message[0] == "PART")
 	{
 		cmdPart(parsed_message, *sending_user);
+		return (1);
+	}
+	if (parsed_message[0] == "INVITE")
+	{
+		cmdInvite(parsed_message, *sending_user);
 		return (1);
 	}
 	if (parsed_message[0] == "MODE")
@@ -229,6 +237,35 @@ int Server::authenticate_user(std::vector<std::string> parsed_message, User *sen
 	return (0);
 }
 
+int Server::handle_commands(std::vector<std::string> parsed_message, User *sending_user)
+{
+	std::string out;
+
+	if (!sending_user->isActive())
+	{
+		if (authenticate_user(parsed_message, sending_user))
+			return (1);
+	}
+	else
+	{
+		if (check_already_registered(parsed_message, sending_user) || check_commands(parsed_message, sending_user))
+		{
+			return (1);
+		}
+		else
+		{
+			// ERR_UNKNOWNCOMMAND (421)
+			out += ":server 421";
+			out += sending_user->getNick() + " ";
+			out += parsed_message[0];
+			out += " :Unknown command";
+			out += "\r\n";
+			send(sending_user->getFd(), out.c_str(), out.size(), 0);
+		}
+	}
+	return (0);
+}
+
 int Server::check_already_registered(std::vector<std::string> parsed_message, User *sending_user)
 {
 	if (parsed_message[0] == "PASS" || parsed_message[0] == "USER")
@@ -296,7 +333,7 @@ void Server::start_main_loop()
 		if (_poll_fds[0].revents & POLLIN)
 		{
 			client_socket = accept(_serv_fd, NULL, NULL);
-			std::cout << client_socket << std::endl;
+			// std::cout << client_socket << std::endl;
 			if (client_socket > 0)
 				handle_new_connection(&tmp, client_socket);
 		}
@@ -305,14 +342,12 @@ void Server::start_main_loop()
 		{
 			if (_poll_fds[i].revents & POLLIN)
 			{
-				User *sending_user;
-				sending_user = getUserByFd(_poll_fds[i].fd);
+				User *sending_user = getUserByFd(_poll_fds[i].fd);
 				bzero(buffer, sizeof(buffer));
 				status = recv(_poll_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
 				
 				if (status > 0)
 				{
-
 					// append message to user buffer
 					sending_user->_buffer.append(buffer, (size_t)status);
 					
@@ -334,32 +369,10 @@ void Server::start_main_loop()
                         if (line.empty())
                             continue;
 
-						std::vector<std::string> parsed_message;
-
-						parsed_message = parse_message(line);
-	
-						//printParsedMessage(parsed_message);
-	
-						// if (clearStrCRFL(tmp) == 1)
-						// 	continue ;
+						std::vector<std::string> parsed_message = parse_message(line);
 						
-						if (!sending_user->isActive())
-						{
-							if (authenticate_user(parsed_message, sending_user))
-								continue;
-						}
-						else
-						{
-							if (check_already_registered(parsed_message, sending_user) 
-								|| check_commands(parsed_message, sending_user))
-							{
-								continue;
-							}
-							else
-							{
-								std::cout << "command not found" << std::endl;
-							}
-						}
+						if (handle_commands(parsed_message, sending_user))
+							continue;
 					}
 					// save any remaining partial data back into the user's buffer
                     sending_user->_buffer = tmp;
@@ -368,7 +381,7 @@ void Server::start_main_loop()
 				else if (status == 0)
 				{
 					// process partial commands before disconnecting
-					disconnectClient(_poll_fds[i].fd);
+					disconnectClient(_poll_fds[i].fd, ":Client Quit");
 					//std::cout << "client disconnected" << std::endl;
 				}
 			}
@@ -389,13 +402,10 @@ void Server::server_start()
 		throw std::runtime_error("failed setting socket on listening");
 
 	std::cout << "Server listening on port: " << ntohs(serv_addr.sin_port) << std::endl;
-
-	try
-	{
+	try {
 		start_main_loop();
 	}
-	catch(const std::exception& e)
-	{
+	catch(const std::exception& e) {
 		std::cerr << e.what() << '\n';
 	}
 }

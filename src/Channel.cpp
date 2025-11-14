@@ -1,6 +1,8 @@
 #include "../inc/Channel.hpp"
 
+//////////////////
 // Constructors
+//////////////////
 
 Channel::Channel() {
 	_max_users = -1;
@@ -67,7 +69,6 @@ bool 	Channel::getInviteOnly() const
 	return _invite_only;
 }
 
-
 std::string	Channel::getTopic() const
 {
 	return _topic;
@@ -108,7 +109,6 @@ void	Channel::setName(std::string& name)
 	_name = name;
 }
 
-
 void	Channel::setTopic(std::string& topic)
 {
 	_topic = topic;  
@@ -133,9 +133,30 @@ void	Channel::setInviteOnly(bool set)
 // Public Functions
 //////////////////////
 
-void	Channel::partUser(User& user, Channel &channel, std::string msg)
+void Channel::addToInvited(User& user)
+{
+    if (!isInVector(user, _invited_users))
+    {
+        _invited_users.push_back(user);
+    }
+}
+
+bool	Channel::isOperatorUser(User target_user) const
+{
+	return (isInVector(target_user, _operators_vector) ? true : false);
+}
+
+void	Channel::showChannelTopic()
+{
+	std::string topic = getTopic();
+	std::cout << topic << std::endl;
+}
+
+void	Channel::partUser(User& user, Channel &channel, std::string msg, int mode)
 {
 	std::string channelName = channel.getName();
+	std::string user_prefix = user.getNick() + "!" + user.getUser() + "@";
+	std::string part_msg;
 
 	for (std::vector<User>::iterator it = _user_vector.begin(); it != _user_vector.end(); ++it)
 	{
@@ -156,11 +177,11 @@ void	Channel::partUser(User& user, Channel &channel, std::string msg)
 			}
 		}
 	}
-
-	// Build the compliant PART message with the user's full prefix
-	// get hostname probably not necessary
-    std::string user_prefix = user.getNick() + "!" + user.getUser() + "@"; // + user.getHostName();
-    std::string part_msg = ":" + user_prefix + " PART #" + channelName + " :" + msg + "\r\n";
+	
+	if (mode == PART) 
+		part_msg = ":" + user_prefix + " PART #" + channelName + " :" + msg + "\r\n";
+	else if (mode == QUIT)
+		part_msg = ":" + user_prefix + " QUIT" + " :" + msg + "\r\n";
 
     // Broadcast to all users in the channel (including the sender)
     channel.writeToChannel(part_msg);

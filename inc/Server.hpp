@@ -2,7 +2,6 @@
 #define SERVER_HPP
 
 #include "header.hpp"
-#include "User.hpp"
 #include "Channel.hpp"
 
 class Server
@@ -41,7 +40,9 @@ class Server
 		Channel*    findChannelByName(std::string channelName);
 		int			checkCmdMode(std::vector<std::string>& msg_parsed, User& user, Channel* targetChannel, std::string& channelName);
 		User*		findUserByNick(std::string targetNick);
-
+        void        remove_from_user_vector(int clientSocket);
+        void        remove_from_pollfds(int clientSocket);
+        void        remove_user_from_channels(int clientSocket, std::string quit_msg);
 
 		///////////////////
 		// Commands
@@ -51,6 +52,10 @@ class Server
 		int cmdPrivateMsg(std::vector<std::string> parsed_message, User &user);
 		int cmdPart(std::vector<std::string> parsed_message, User &user);
 		int cmdMode(std::vector<std::string>& msg_parsed, User& user);
+        int cmdInvite(std::vector<std::string> parsed_message, User &user);
+        int cmdTopic(std::vector<std::string> parsed_message, User &user);
 };
+
+std::string message_formatter2(int error, std::string command, const char* message);
 
 #endif

@@ -1,7 +1,6 @@
 #ifndef CHANNEL_HPP
 # define CHANNEL_HPP
 # include "header.hpp"
-# include "User.hpp"
 
 class Channel
 {
@@ -29,20 +28,26 @@ class Channel
 		~Channel();
 
 		void	addUserToChannel(User& user, std::string& passwd);
+		void 	addToInvited(User& user);
 		// void	inviteUser(User& user, User&user_operator);
 		void	addUserToOperatorsVector(User& user, User& user_operator);
 		// void	removeUserFromVector(User& user, std::vector<User>& vector);
 		// void	setMaxUsers(size_t max_users, User& user_operator);
-		/////////////////////////////////////
+
+		///////////////////////
 		// Channel Menagement
+		///////////////////////
+
 		// void	kickUser(User& user, User& user_operator, std::string msg);
-		void	partUser(User& user, Channel &channel, std::string msg);
+		void	partUser(User& user, Channel &channel, std::string msg, int mode);
 		void	writeToChannel(std::string& buffer) const;
-		// void	showChannelTopic();
-		// bool	isOperatorUser(User target_user) const;
+		void	showChannelTopic();
+		bool	isOperatorUser(User target_user) const;
 		// void	inviteUser(User& user, User& user_operator);
-		////////////////////////////////////
+
+		///////////////////////
 		// Getters & Setters
+		///////////////////////
 
 		std::vector<User> getUserVector() const;
 		std::vector<User> getInvitedUsersVector() const;

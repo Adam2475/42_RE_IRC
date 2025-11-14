@@ -1,5 +1,5 @@
 #include "../inc/header.hpp"
-#include "../inc/Channel.hpp"
+// #include "../inc/Channel.hpp"
 #include "../inc/Server.hpp"
 
 
@@ -76,7 +76,7 @@ void    Server::channelCreate(std::string& channelName, std::string& pass, User&
 
 int Server::cmdPart(std::vector<std::string> parsed_message, User &user)
 {
-    //User *user = getUserByFd(clientSocket);
+    //User *user = getUserByFd(user.getFd());
     // if (user.getNick().empty()) {
     //     return 1; // User not found
     // }
@@ -140,7 +140,7 @@ int Server::cmdPart(std::vector<std::string> parsed_message, User &user)
 
     // Remove the user from the channel's internal list
 	// moved reply message logic to partUser()
-    targetChannel->partUser(user, *targetChannel, reason);
+    targetChannel->partUser(user, *targetChannel, reason, PART);
 
     return 0;
 }
@@ -150,7 +150,7 @@ int Server::cmdJoin(std::vector<std::string>& mess, User &user)
 	std::string channelName;
 	std::string pass;
 
-	std::cout << "detected command JOIN" << mess[0] << std::endl;
+	//std::cout << "detected command JOIN" << mess[0] << std::endl;
 	mess.erase(mess.begin());
 	channelName = mess[0];
 	if (mess[0].empty())
@@ -262,39 +262,141 @@ int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
     return (0);
 }
 
-int		Server::cmdQuit(std::vector<std::string> parsed_message, User &user)
+int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
 {
-	std::string quit_msg;
-	std::string out;
+	std::string targetNick;
+	std::string channelName;
+	//oss >> targetNick >> channelName;
 
-	if (parsed_message.size() == 2)
+	if (parsed_message.size() < 3)
 	{
-		quit_msg = parsed_message[1];
+		std::string err = ":server 461 " + user.getNick() + " INVITE :Not enough parameters\r\n";
+	 	send(user.getFd(), err.c_str(), err.size(), 0);
+	 	return (1);				
+	}
+
+	targetNick = parsed_message[1];
+	channelName = parsed_message[2];
+
+	//User inviter = getUserByFd(clientSocket);
+	User targetUser = findUserByNick(targetNick);
+	if (channelName[0] == '#')
+	{
+        channelName = channelName.substr(1);
+    }
+	Channel *targetChannel = findChannelByName(channelName);
+
+	// if (targetNick.empty() || channelName.empty())
+	// {
+	// 	// ERR_NEEDMOREPARAMS (461)
+	// 	std::cout << "wrong number of arguments" << std::endl;
+	// 	return (1);
+	// }
+	
+	if (targetUser.getNick().empty())
+	{
+		std::cout << "user not found" << std::endl;
+		//"err 401"
+		return (1);
+	}
+
+	std::cout << "found user: " << targetUser.getNick() << std::endl;
+	std::cout << channelName << std::endl;
+
+	if (targetChannel == NULL)
+	{
+		std::cout << "channel not found" << std::endl;
+		// "err 403"
+		return (1);
+	}
+
+	// checks
+
+	// Check if inviter is on the channel
+    if (!isInVector(user, targetChannel->getUserVector())) {
+        std::string err = ":server 442 " + user.getNick() + " #" + channelName + " :You're not on that channel\r\n";
+        send(user.getFd(), err.c_str(), err.size(), 0);
+        return 1;
+    }
+
+	// Check if target is already on the channel
+    if (isInVector(targetUser, targetChannel->getUserVector())) {
+        std::string err = ":server 443 " + user.getNick() + " " + targetNick + " #" + channelName + " :is already on channel\r\n";
+        send(user.getFd(), err.c_str(), err.size(), 0);
+        return 1;
+    }
+
+	// send invite
+	targetChannel->addToInvited(targetUser);
+
+	// Send RPL_INVITING to user
+    std::string inviting_msg = ":server 341 " + user.getNick() + " " + targetNick + " #" + channelName + "\r\n";
+    send(user.getFd(), inviting_msg.c_str(), inviting_msg.size(), 0);
+
+    // Send INVITE to target user
+    std::string invite_msg = ":" + user.getNick() + " INVITE " + targetNick + " :#" + channelName + "\r\n";
+    send(targetUser.getFd(), invite_msg.c_str(), invite_msg.size(), 0);
+
+
+	return (0);
+}
+
+int		Server::cmdTopic(std::vector<std::string> parsed_message, User &user)
+{
+	std::string channel_name;
+	//oss >> channel_name;
+	std::cout << "detected command TOPIC" << std::endl;
+	std::string arg2;
+	//oss >> arg2;
+	//User targetUser = getUserByFd(clientSocket);
+
+	if (parsed_message.size() < 2)
+	{
+		std::string err = ":server 461 " + user.getNick() + " TOPIC :Not enough parameters\r\n";
+	 	send(user.getFd(), err.c_str(), err.size(), 0);
+	 	return (1);						
+	}
+
+	channel_name = parsed_message[1];
+
+	if (channel_name.empty())
+	{
+		std::cout << "fatal error, no channel topic" << std::endl;
+		return (1);
+	}
+	std::cout << channel_name << std::endl;
+
+	if (removeInitialHash(&channel_name))
+	{
+		std::cout << "bad formatted arguments, need channel" << std::endl;
 	}
 	else
 	{
-		quit_msg = ":Client Quit";
+		std::cout << "hash removed correctly" << std::endl;
+		std::cout << channel_name << std::endl;
 	}
 
-	out += ":";
-	out += user.getNick();
-	out += " QUIT";
-	out += quit_msg;
-	out += "\r\n";
-	//  = ":" + quittingUser.getNickName() + " QUIT " + quit_msg + "\r\n";
+	Channel *targetChannel = findChannelByName(channel_name);
+	if (!targetChannel)
+	{
+		std::cout << "fatal error, no channel found" << std::endl;
+		exit(1);
+	}
+	targetChannel->showChannelTopic();
 
-    // Erasing the user from all channels
-    // for (std::vector<Channel>::reverse_iterator it = _channels.rbegin(); it != _channels.rend(); ++it)
-    // {
-    //     if (isInVector(quittingUser, it->getUserVector()))
-    //     {
-    //         //it->writeToChannel(quittingUser, out);
-    //         it->partUser(quittingUser, *it, quit_msg);
-    //     }
-    // }
-
-	disconnectClient(user.getFd());
-
+	if (!arg2.empty())
+	{
+		if (targetChannel->isOperatorUser(user))
+		{
+			std::cout << "user is operator, TOPIC operation allowed" << std::endl;
+			targetChannel->setTopic(arg2);
+		}
+		else
+		{
+			std::cout << "User is not operator, operation aborted" << std::endl;
+			return (1);
+		}
+	}
 	return (0);
 }
 
@@ -393,4 +495,10 @@ User*	Server::findUserByNick(std::string targetNick)
 		}
 	}
 	return NULL;
+}
+
+int		Server::cmdQuit(std::vector<std::string> parsed_message, User &user)
+{
+	std::string quit_msg = parsed_message.size() >= 2 ? parsed_message[1] : ":Client Quit";
+	return (disconnectClient(user.getFd(), quit_msg), 0);
 }

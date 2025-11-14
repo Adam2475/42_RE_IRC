@@ -1,7 +1,8 @@
 NAME = ircserv
 CC = c++
 
-SRCS = ./src/main.cpp ./src/utils.cpp ./src/Server.cpp ./src/User.cpp ./src/Channel.cpp ./src/Commands.cpp
+SRCS = ./src/main.cpp ./src/Server.cpp ./src/User.cpp ./src/Channel.cpp ./src/Commands.cpp \
+		./src/utils.cpp ./src/command_utils.cpp
 
 CFLAGS = -std=c++98 -Wall -Wextra -Werror -g
 
