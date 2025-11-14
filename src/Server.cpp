@@ -70,6 +70,7 @@ void Server::disconnectClient(int clientSocket, std::string quit_msg)
 	remove_user_from_channels(clientSocket, quit_msg);
 	remove_from_pollfds(clientSocket);
 	remove_from_user_vector(clientSocket);
+	std::cout << "Client no: " << clientSocket << " disconnected" << std::endl;
 }
 
 User *Server::getUserByFd(int clientSocket)
@@ -124,7 +125,6 @@ static int exit_code = 0;
 
 void signalHandler(int sig)
 {
-	std::cout << "called signal handler" << std::endl;
 	exit_code = sig;
 }
 
@@ -158,6 +158,11 @@ int Server::check_commands(std::vector<std::string> parsed_message, User *sendin
 	if (parsed_message[0] == "MODE")
 	{
 		cmdMode(parsed_message, *sending_user);
+		return (1);
+	}
+	if (parsed_message[0] == "PING")
+	{
+		cmdPing(parsed_message, *sending_user);
 		return (1);
 	}
 	return (0);
@@ -254,13 +259,13 @@ int Server::handle_commands(std::vector<std::string> parsed_message, User *sendi
 		}
 		else
 		{
-			// ERR_UNKNOWNCOMMAND (421)
-			out += ":server 421";
+			out += ":server 421 :";
 			out += sending_user->getNick() + " ";
 			out += parsed_message[0];
 			out += " :Unknown command";
 			out += "\r\n";
 			send(sending_user->getFd(), out.c_str(), out.size(), 0);
+			std::
 		}
 	}
 	return (0);
@@ -370,6 +375,8 @@ void Server::start_main_loop()
                             continue;
 
 						std::vector<std::string> parsed_message = parse_message(line);
+
+						//std::cout << line << std::endl;
 						
 						if (handle_commands(parsed_message, sending_user))
 							continue;

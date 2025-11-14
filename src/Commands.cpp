@@ -1,6 +1,23 @@
 #include "../inc/header.hpp"
 #include "../inc/Server.hpp"
 
+int Server::cmdPing(std::vector<std::string> parsed_message, User &user)
+{
+	std::cout << "PING received" << std::endl;
+	if (parsed_message.size() < 2)
+	{
+		std::string msg = ":server 461 " + user.getNick() + " PING :Not enough parameters\r\n";
+        send(user.getFd(), msg.c_str(), msg.size(), 0);
+        return (1);
+	}
+	else
+	{
+		std::string msg = "PONG " + parsed_message[1] + "\r\n";
+		send(user.getFd(), msg.c_str(), msg.size(), 0);
+        return (1);
+	}
+}
+
 int Server::cmdPart(std::vector<std::string> parsed_message, User &user)
 {
     //User *user = getUserByFd(user.getFd());
@@ -14,7 +31,6 @@ int Server::cmdPart(std::vector<std::string> parsed_message, User &user)
 
     if (parsed_message.size() < 2)
     {
-        // ERR_NEEDMOREPARAMS (461)
         std::string msg = ":server 461 " + user.getNick() + " PART :Not enough parameters\r\n";
         send(user.getFd(), msg.c_str(), msg.size(), 0);
         return 1;
