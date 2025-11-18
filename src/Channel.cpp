@@ -322,7 +322,7 @@ int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 
 void	Channel::modeTopic(std::string& arg)
 {
-	std::cout << BLUE << "entro nell'OPERATORS mode" << RESET << std::endl;
+	std::cout << BLUE << "entro nell'TOPIC mode" << RESET << std::endl;
 	if (arg[0] == '-')
 		setTopicRestriction(false);
 	else if (arg[0] == '+')

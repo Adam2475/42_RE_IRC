@@ -100,22 +100,26 @@ int		Server::channelAdder(std::string& channelName, User& user, std::string& pas
 			{
 				if (channelIterator->getInvitedUsersVector().size() > 0)
 				{
+					size_t i = 0;
 					std::vector<User> invited_vect = channelIterator->getInvitedUsersVector();
-					for (size_t i = 0; i <= channelIterator->getInvitedUsersVector().size(); i++)
+					print_vec(invited_vect);
+					while (i < invited_vect.size())
 					{
+						std::cout << YELLOW << invited_vect[i].getNick() << RESET << std::endl;
 						if (invited_vect[i] == user)
 						{
 							channelIterator->addUserToChannel(user, pass);
 							join_message_confirm(user, *channelIterator);
 							return (0);
 						}
-						else
-						{
-							std::string tmp(message_formatter(473, user.getNick(), channelIterator->getName(), "Cannot join channel (+i)"));
-							send(user.getFd(), tmp.c_str(), tmp.size(), 0);
-							std::cout << RED << user.getNick() << " cannot join channel: invite only restriction" << RESET << std::endl;
-							return 1;
-						}
+						i++;
+					}
+					if (invited_vect.begin() + i == invited_vect.end())
+					{
+						std::string tmp(message_formatter(473, user.getNick(), channelIterator->getName(), "Cannot join channel (+i)"));
+						send(user.getFd(), tmp.c_str(), tmp.size(), 0);
+						std::cout << RED << user.getNick() << " cannot join channel: invite only restriction" << RESET << std::endl;
+						return 1;
 					}
 				}
 				else
