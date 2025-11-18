@@ -142,7 +142,7 @@ int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
 			i = findChannelIndex(channelName);
 			if (i == _channels.size())
 			{
-				std::string err = ":server 402 " + user.getNick() + " " + target + " :No such channel\r\n";
+				std::string err = ":server 403 " + user.getNick() + " " + target + " :No such channel\r\n";
 				send(user.getFd(), err.c_str(), err.size(), 0);
 				return (1);
 			}
@@ -192,7 +192,7 @@ int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
 	if (targetNick.empty() || channelName.empty())
 	{
 		// ERR_NEEDMOREPARAMS (461)
-		std::string tmp(message_formatter2(461, "INVITE", "Need more params"));
+		std::string tmp(message_formatter2(461, "INVITE", ":Not enough parameters\r\n"));
 		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
 		std::cout << "wrong number of arguments" << std::endl;
 		return (1);
@@ -200,7 +200,7 @@ int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
 	User* targetUser = findUserByNick(targetNick);
 	if (targetUser == NULL)
 	{
-		std::string tmp = ":server 401 " + targetNick + " :No such nick\r\n";
+		std::string tmp = ":server 401 " + targetNick + " :There was no such nickname\r\n";
 		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
 		return 1;
 	}
@@ -213,8 +213,8 @@ int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
 	
 	if (targetUser->getNick().empty())
 	{
-		std::cout << "user not found" << std::endl;
-		//"err 401"
+		std::string err = ":server 401 " + user.getNick() + " " + targetNick + " :There was no such nickname\r\n";
+		send(user.getFd(), err.c_str(), err.size(), 0);
 		return (1);
 	}
 
@@ -223,8 +223,8 @@ int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
 
 	if (targetChannel == NULL)
 	{
-		std::cout << "channel not found" << std::endl;
-		// "err 403"
+		std::string err = ":server 403 " + user.getNick() + " " + channelName + " :No such channel\r\n";
+		send(user.getFd(), err.c_str(), err.size(), 0);
 		return (1);
 	}
 
