@@ -58,6 +58,7 @@ class Server
         int cmdInvite(std::vector<std::string> parsed_message, User &user);
         int cmdTopic(std::vector<std::string> parsed_message, User &user);
 		int cmdPing(std::vector<std::string> parsed_message, User &user);
+		int cmdKick(std::vector<std::string> parsed_message, User &user);
 };
 
 std::string message_formatter2(int error, std::string command, const char* message);

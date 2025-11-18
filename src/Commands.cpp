@@ -410,3 +410,66 @@ int		Server::cmdQuit(std::vector<std::string> parsed_message, User &user)
 	std::string quit_msg = parsed_message.size() >= 2 ? parsed_message[1] : ":Client Quit";
 	return (disconnectClient(user.getFd(), quit_msg), 0);
 }
+
+int		Server::cmdKick(std::vector<std::string> parsed_message, User &user)
+{
+	std::cout << "find command KICK" << std::endl;
+	std::string channelName;
+	Channel *targetChannel = NULL;
+	if (parsed_message.size() < 3)
+	{	
+		std::string kick_err = message_formatter2(461, "KICK", "need more params");
+		send(user.getFd(), kick_err.c_str(), kick_err.size(), 0);
+		return 1;
+	}
+	if (!parsed_message[1].empty())
+	{
+		channelName = parsed_message[1].substr(1);
+		targetChannel = findChannelByName(channelName);
+	}
+	if (!targetChannel)
+	{
+		std::string kick_err = message_formatter2(403, "KICK", "no such channel");
+		send(user.getFd(), kick_err.c_str(), kick_err.size(), 0);
+		return 1;
+	}
+	if (!isInVector(user, targetChannel->getUserOperatorsVector()))
+	{
+		std::string kick_err = message_formatter(482, user.getNick(), channelName, "You're not an operator");
+		send(user.getFd(), kick_err.c_str(), kick_err.size(), 0);
+		return 1;
+	}
+	User* kicked_user = findUserByNick(parsed_message[2]);
+	if (!kicked_user)
+	{
+		std::string kick_err = ":server 401 " + user.getNick() + ' ' + parsed_message[2] + " :No such nick\r\n";
+		send(user.getFd(), kick_err.c_str(), kick_err.size(), 0);
+		return 1;
+	}
+	std::vector<User>::iterator it = std::find(
+			targetChannel->getUserVector().begin(),
+			targetChannel->getUserVector().end(),
+			*kicked_user
+		);
+	if (it == targetChannel->getUserVector().end())
+	{
+		std::cout << RED << "didn't found the user" << RESET << std::endl;
+		std::string kick_err = ":server 441 "
+			+ user.getNick() + ' '
+			+ kicked_user->getNick() + ' '
+			+ channelName + " :They aren't on that channel\r\n";
+		send(user.getFd(), kick_err.c_str(), kick_err.size(), 0);
+		return 1;
+	}
+	if (isInVector(*kicked_user, targetChannel->getUserOperatorsVector()))
+	{
+		std::vector<User>::iterator op_it = std::find(
+				targetChannel->getUserOperatorsVector().begin(),
+				targetChannel->getUserOperatorsVector().end(),
+				*kicked_user
+			);
+		targetChannel->getUserOperatorsVector().erase(op_it);
+	}
+	targetChannel->getUserVector().erase(it);
+	return 0;
+}
