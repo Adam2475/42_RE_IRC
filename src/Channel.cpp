@@ -6,7 +6,7 @@
 
 Channel::Channel() {
 	_max_users = -1;
-	_topic_restriction = false;
+	_topic_restriction = true;
 	_invite_only = false;
 }
 
@@ -150,10 +150,29 @@ bool	Channel::isOperatorUser(User target_user) const
 	return (isInVector(target_user, _operators_vector) ? true : false);
 }
 
-void	Channel::showChannelTopic()
+void Channel::showChannelTopic(User &user, const std::string serverName)
 {
-	std::string topic = getTopic();
-	std::cout << topic << std::endl;
+    const std::string &topic = getTopic();
+    std::string reply;
+
+    if (topic.empty())
+    {
+        // 331 RPL_NOTOPIC
+        reply = ":" + serverName 
+              + " 331 " + user.getNick() 
+              + " " + _name 
+              + " :No topic is set\r\n";
+    }
+    else
+    {
+        // 332 RPL_TOPIC
+        reply = ":" + serverName 
+              + " 332 " + user.getNick() 
+              + " " + _name 
+              + " :" + topic + "\r\n";
+    }
+
+    send(user.getFd(), reply.c_str(), reply.size(), 0);
 }
 
 void	Channel::partUser(User& user, Channel &channel, std::string msg, int mode)

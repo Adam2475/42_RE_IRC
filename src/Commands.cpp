@@ -115,7 +115,17 @@ int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
 	else
 	{
 		targetsToken = parsed_message[1];
-		msgBody = parsed_message[2];
+		if (parsed_message.size() == 3)
+			msgBody = parsed_message[2];
+		else if (parsed_message.size() > 3)
+		{
+			size_t index = 2;
+			while (index < parsed_message.size())
+			{
+				msgBody += parsed_message[index] + ' ';
+				index++;
+			}
+		}
 		tss.str(targetsToken);
 	}
 
@@ -241,31 +251,31 @@ int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
 int		Server::cmdTopic(std::vector<std::string> parsed_message, User &user)
 {
 	std::string channel_name;
-	//oss >> channel_name;
 	std::cout << "detected command TOPIC" << std::endl;
 	std::string arg2;
-	//oss >> arg2;
-	//User targetUser = getUserByFd(clientSocket);
 
 	if (parsed_message.size() < 2)
 	{
-		std::string err = ":server 461 " + user.getNick() + " TOPIC :Not enough parameters\r\n";
-	 	send(user.getFd(), err.c_str(), err.size(), 0);
-	 	return (1);						
+		std::string err_msg = message_formatter2(461, "TOPIC", "need more params");
+		send(user.getFd(), err_msg.c_str(), err_msg.size(), 0);
+		return 1;
 	}
 
 	channel_name = parsed_message[1];
 
 	if (channel_name.empty())
 	{
-		std::cout << "fatal error, no channel topic" << std::endl;
-		return (1);
+		std::string err_msg = message_formatter2(461, "TOPIC", "need more params");
+		send(user.getFd(), err_msg.c_str(), err_msg.size(), 0);
+		return 1;
 	}
 	std::cout << channel_name << std::endl;
 
 	if (removeInitialHash(&channel_name))
 	{
-		std::cout << "bad formatted arguments, need channel" << std::endl;
+		std::string err_msg = message_formatter2(461, "TOPIC", "need more params");
+		send(user.getFd(), err_msg.c_str(), err_msg.size(), 0);
+		return 1;
 	}
 	else
 	{
@@ -276,25 +286,40 @@ int		Server::cmdTopic(std::vector<std::string> parsed_message, User &user)
 	Channel *targetChannel = findChannelByName(channel_name);
 	if (!targetChannel)
 	{
-		std::cout << "fatal error, no channel found" << std::endl;
-		exit(1);
+		std::string err_msg = message_formatter2(403, "TOPIC", "no such channel");
+		send(user.getFd(), err_msg.c_str(), err_msg.size(), 0);
+		return 1;
 	}
-	targetChannel->showChannelTopic();
-
-	// TODO aggiungere controllo per il topic restriction del channel
-	if (!arg2.empty())
+	if (!isInVector(user, targetChannel->getUserVector()))
 	{
-		if (targetChannel->isOperatorUser(user))
-		{
-			std::cout << "user is operator, TOPIC operation allowed" << std::endl;
-			targetChannel->setTopic(arg2);
-		}
-		else
-		{
-			std::cout << "User is not operator, operation aborted" << std::endl;
-			return (1);
-		}
+		std::string err_msg = message_formatter(442, user.getNick(), channel_name, "You're not on that channel");
+		send(user.getFd(), err_msg.c_str(), err_msg.size(), 0);
+		return 1;
 	}
+	if (parsed_message.size() > 2)
+	{
+		if (targetChannel->getTopicRestriction() && !isInVector(user, targetChannel->getUserOperatorsVector()))
+		{
+			std::string err_msg = message_formatter(482, user.getNick(), channel_name, "You're not a channel operator");
+			send(user.getFd(), err_msg.c_str(), err_msg.size(), 0);
+			return 1;
+		}
+		size_t index = 2;
+		while (index < parsed_message.size())
+		{
+			if (index + 1 < parsed_message.size())
+				arg2 += parsed_message[index] + ' ';
+			else
+				arg2 += parsed_message[index];
+			index++;
+		}
+		targetChannel->setTopic(arg2);
+		std::string broadcast = ":" + user.getNick() + "!" + user.getUser() + "@host TOPIC #" + channel_name + " :" + arg2 + "\r\n";
+		targetChannel->writeToChannel(broadcast);
+		return 0;
+	}
+	else
+		targetChannel->showChannelTopic(user, "server");
 	return (0);
 }
 
