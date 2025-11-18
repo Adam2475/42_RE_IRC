@@ -189,7 +189,7 @@ int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
 	User* targetUser = findUserByNick(targetNick);
 	if (targetUser == NULL)
 	{
-		std::string tmp = ":server 401 " + targetNick + " :No such nick";
+		std::string tmp = ":server 401 " + targetNick + " :No such nick\r\n";
 		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
 		return 1;
 	}
@@ -343,7 +343,7 @@ int	Server::checkCmdMode(std::vector<std::string>& msg_parsed, User& user, Chann
 	if (msg_parsed.size() == 0)
 	{
 		std::cout << RED << channelName << " flag not present" << RESET << std::endl;
-		std::string mode_err = "461 " + user.getNick() + " MODE: need more params";
+		std::string mode_err = "461 " + user.getNick() + " MODE: need more params\r\n";
 		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
 		return 1;
 	}
@@ -352,7 +352,7 @@ int	Server::checkCmdMode(std::vector<std::string>& msg_parsed, User& user, Chann
 	if (std::find(mode, mode+11, flag) == mode + 11)
 	{
 		std::cout << RED << channelName << " unknown flag" << RESET << std::endl;
-		std::string mode_err = "501 " + user.getNick() + " :Unknown MODE flag";
+		std::string mode_err = "501 " + user.getNick() + " :Unknown MODE flag\r\n";
 		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
 		return 1;
 	}
@@ -365,7 +365,7 @@ int Server::cmdMode(std::vector<std::string>& msg_parsed, User& user)
 	msg_parsed.erase(msg_parsed.begin());
 	if (msg_parsed.size() == 0)
 	{
-		std::string mode_err = "461 " + user.getNick() + " MODE: need more params";
+		std::string mode_err = "461 " + user.getNick() + " MODE: need more params\r\n";
 		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
 		return 1;
 	}
@@ -386,14 +386,14 @@ int Server::cmdMode(std::vector<std::string>& msg_parsed, User& user)
 		if (msg_parsed.size() == 1)
 		{
 			std::cout << RED << channelName << " flag +o: user not inserted" << RESET << std::endl;
-			std::string mode_err = "461 " + user.getNick() + " MODE: need more params";
+			std::string mode_err = "461 " + user.getNick() + " MODE: need more params\r\n";
 			send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
 			return 1;
 		}
 		User* new_operator = findUserByNick(msg_parsed[1]);
 		if (new_operator == NULL)
 		{
-			std::string mode_err = user.getNick() + ' ' + msg_parsed[1] + " :No such nick";
+			std::string mode_err = user.getNick() + ' ' + msg_parsed[1] + " :No such nick\r\n";
 			send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
 			return 1;
 		}
@@ -403,7 +403,6 @@ int Server::cmdMode(std::vector<std::string>& msg_parsed, User& user)
 	else if (flag[1] == 't')
 		targetChannel->modeTopic(flag);
 	return 0;
-
 }
 
 int		Server::cmdQuit(std::vector<std::string> parsed_message, User &user)

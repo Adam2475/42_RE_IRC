@@ -293,7 +293,7 @@ int	Channel::modeMaxUsers(std::vector<std::string>& msg_parsed, std::string& arg
 	if (arg[0] == '+' && msg_parsed.size() == 1)
 	{
 		std::cout << RED << _name << " flag +l: number not inserted" << RESET << std::endl;
-		std::string mode_err = "461 " + user.getNick() + " MODE: need more params";
+		std::string mode_err = "461 " + user.getNick() + " MODE: need more params\r\n";
 		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
 		return 1;
 	}
@@ -314,7 +314,7 @@ int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 	{
 		std::string mode_err = ":server 441" + user.getNick()
 		+ ' ' + new_operator->getNick()
-		+ ' ' + _name + " :They aren't on that channel";
+		+ ' ' + _name + " :They aren't on that channel\r\n";
 		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
 		return 1;
 	}
@@ -323,7 +323,7 @@ int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 		if (isInVector(*new_operator, _operators_vector))
 		{
 			_operators_vector.erase(std::find(_operators_vector.begin(), _operators_vector.end(), *new_operator));
-			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick();
+			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick() + "\r\n";
 			writeToChannel(confirm);
 		}
 	}
@@ -332,7 +332,7 @@ int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 		if (isInVector(*new_operator, _operators_vector))
 		{
 			addUserToOperatorsVector(*new_operator, user);
-			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick();
+			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick() + "\r\n";
 			writeToChannel(confirm);
 		}
 	}

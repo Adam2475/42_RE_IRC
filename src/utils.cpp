@@ -124,7 +124,7 @@ std::string message_formatter(int error, const std::string& nickname, const std:
     std::string msg;
 	std::ostringstream err;
 	err << error;
-    msg = ":server " + err.str() + ' ' + nickname + ' ' + '#' + channel + " :" + message;
+    msg = ":server " + err.str() + ' ' + nickname + ' ' + '#' + channel + " :" + message + "\r\n";
     return (msg);
 }
 

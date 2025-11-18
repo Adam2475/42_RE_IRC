@@ -94,7 +94,7 @@ void Server::check_authentication(User *sending_user)
 		message += sending_user->getNick();
 		message += " :Welcome to 42_IRC, ";
 		message += sending_user->getNick();
-		message += "\n\r";
+		message += "\r\n";
 		send(sending_user->getFd(), message.c_str(), message.size(), 0);
 		sending_user->setActive(true);
 	}
