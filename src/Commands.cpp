@@ -1,5 +1,6 @@
 #include "../inc/header.hpp"
 #include "../inc/Server.hpp"
+#include "../inc/User.hpp"
 
 int Server::cmdPing(std::vector<std::string> parsed_message, User &user)
 {
@@ -145,6 +146,16 @@ int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
 				send(user.getFd(), err.c_str(), err.size(), 0);
 				return (1);
 			}
+			else
+			{
+				if (!isInVector(user, _channels[i].getUserVector()))
+				{
+					// ERR_CANNOTSENDTOCHAN (404)
+					std::string err = ":server 404 " + user.getNick() + " " + target + " :Cannot send to channel\r\n";
+					send(user.getFd(), err.c_str(), err.size(), 0);
+					continue;
+				}
+			}
 		}
 		else
 		{
@@ -158,7 +169,7 @@ int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
 		}
 
 		std::string out = ":" + user.getNick() + " PRIVMSG " + target + " :" + msgBody + "\r\n";
-		is_channel ? _channels[i].writeToChannel(out) : (void)send(_users[i].getFd(), out.c_str(), out.size(), 0);
+		is_channel ? _channels[i].writeToChannel(out, user.getNick()) : (void)send(_users[i].getFd(), out.c_str(), out.size(), 0);
 	}
     return (0);
 }
@@ -315,7 +326,7 @@ int		Server::cmdTopic(std::vector<std::string> parsed_message, User &user)
 		}
 		targetChannel->setTopic(arg2);
 		std::string broadcast = ":" + user.getNick() + "!" + user.getUser() + "@host TOPIC #" + channel_name + " :" + arg2 + "\r\n";
-		targetChannel->writeToChannel(broadcast);
+		targetChannel->writeToChannel(broadcast, user.getNick());
 		return 0;
 	}
 	else

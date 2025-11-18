@@ -6,7 +6,6 @@ User::User(std::string nick, std::string user, int fd) : _nick(nick), _user(user
 {
     _is_active = false;
     _set_pass = false;
-    //_wrong_pass = false;
 }
 
 User::~User() {}
@@ -35,20 +34,10 @@ void User::setPswdFlag(bool value)
     _set_pass = value;
 }
 
-// void User::setWrongPswd(bool value)
-// {
-//     _wrong_pass = value;
-// }
-
 void User::setActive(bool value)
 {
     _is_active = value;
 }
-
-// bool User::getWrongPswd()
-// {
-//     return _wrong_pass;
-// }
 
 bool User::isActive()
 {

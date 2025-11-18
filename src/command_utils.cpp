@@ -67,14 +67,14 @@ void		Server::join_message_confirm(User &user, Channel& channel) const
 {
 	// Standard IRC Replies for JOIN
 	std::string join_msg = ":" + user.getNick() + " JOIN #" + channel.getName() + "\r\n";
-	channel.writeToChannel(join_msg);
+	channel.writeToChannel(join_msg, user.getNick());
 	std::string topic_msg = ":server 332 " + user.getNick() + " #" + channel.getName() + " :" + channel.getTopic() + "\r\n";
 	send(user.getFd(), topic_msg.c_str(), topic_msg.size(), 0);
 	std::string users_list = channel.getNickList();
 	std::string namreply_msg = ":server 353 " + user.getNick() + " = #" + channel.getName() + " :" + users_list + "\r\n";
-	channel.writeToChannel(namreply_msg);
+	channel.writeToChannel(namreply_msg, "");
 	std::string endofnames_msg = ":server 366 " + user.getNick() + " #" + channel.getName() + " :End of /NAMES list.\r\n";
-	channel.writeToChannel(endofnames_msg);
+	channel.writeToChannel(endofnames_msg, "");
 }
 
 

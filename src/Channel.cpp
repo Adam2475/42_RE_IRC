@@ -207,7 +207,7 @@ void	Channel::partUser(User& user, Channel &channel, std::string msg, int mode)
 		part_msg = ":" + user_prefix + " QUIT" + " :" + msg + "\r\n";
 
     // Broadcast to all users in the channel (including the sender)
-    channel.writeToChannel(part_msg);
+    channel.writeToChannel(part_msg, user.getNick());
     send(user.getFd(), part_msg.c_str(), part_msg.size(), 0);
 }
 
@@ -256,11 +256,12 @@ void	Channel::addUserToOperatorsVector(User& user, User& user_operator)
 }
 
 
-void Channel::writeToChannel(std::string& buffer) const
+void Channel::writeToChannel(std::string& buffer, std::string sending_nick) const
 {
 	for (std::vector<User>::const_iterator it = _user_vector.begin(); it != _user_vector.end(); ++it)
 	{
-		send(it->getFd(), buffer.c_str(), buffer.size(), 0);
+		if (it->getNick() != sending_nick)
+			send(it->getFd(), buffer.c_str(), buffer.size(), 0);
 	}
 }
 
@@ -324,7 +325,7 @@ int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 		{
 			_operators_vector.erase(std::find(_operators_vector.begin(), _operators_vector.end(), *new_operator));
 			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick() + "\r\n";
-			writeToChannel(confirm);
+			writeToChannel(confirm, user.getNick());
 		}
 	}
 	else if (arg[0] == '+')
@@ -333,7 +334,7 @@ int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 		{
 			addUserToOperatorsVector(*new_operator, user);
 			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick() + "\r\n";
-			writeToChannel(confirm);
+			writeToChannel(confirm, user.getNick());
 		}
 	}
 	return 0;
