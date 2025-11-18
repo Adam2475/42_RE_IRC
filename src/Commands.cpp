@@ -1,5 +1,6 @@
 #include "../inc/header.hpp"
 #include "../inc/Server.hpp"
+#include "../inc/User.hpp"
 
 int Server::cmdPing(std::vector<std::string> parsed_message, User &user)
 {
@@ -144,6 +145,16 @@ int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
 				std::string err = ":server 402 " + user.getNick() + " " + target + " :No such channel\r\n";
 				send(user.getFd(), err.c_str(), err.size(), 0);
 				return (1);
+			}
+			else
+			{
+				if (!isInVector(user, _channels[i].getUserVector()))
+				{
+					// ERR_CANNOTSENDTOCHAN (404)
+					std::string err = ":server 404 " + user.getNick() + " " + target + " :Cannot send to channel\r\n";
+					send(user.getFd(), err.c_str(), err.size(), 0);
+					continue;
+				}
 			}
 		}
 		else
