@@ -6,7 +6,8 @@
 - channel creation segfaults | OK
 - channel get created with an extra hash | OK
 - implement "JOIN 0"
-- add check if part of the channel to PRIVMSG
+- add check if part of the channel to PRIVMSG | OK 
+- channel user list breaks after changing NICK
 
 // when no external messages mode set
 
@@ -20,4 +21,4 @@ NICK
 
 USER
 
-PRIVMSG // check for messages from external
+PRIVMSG

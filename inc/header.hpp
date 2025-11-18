@@ -75,5 +75,6 @@ void                        signalHandler(int sig);
 std::string                 message_formatter(int error, const std::string& nickname, const std::string& channel, const char* message);
 bool	                    isStrNotPrintable(const char *str);
 int                         removeInitialHash(std::string *target);
+bool                        isValidNick(const std::string &nick);
 
 #endif

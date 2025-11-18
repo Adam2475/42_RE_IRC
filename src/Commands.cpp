@@ -484,3 +484,40 @@ int		Server::cmdKick(std::vector<std::string> parsed_message, User &user)
 	targetChannel->getUserVector().erase(it);
 	return 0;
 }
+
+int		Server::cmdNick(std::vector<std::string> parsed_message, User *sending_user)
+{
+	if (parsed_message.size() < 2 || parsed_message[1].empty())
+	{
+		std::string message;
+		message += ":server 461 ";
+		message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
+		message += " :Not enough parameters\n\r";
+		send(sending_user->getFd(), message.c_str(), message.size(), 0);
+		return (1);
+	}
+	if (check_existing_user(_users, parsed_message[1]))
+	{
+		std::string message;
+		message += ":server 433 ";
+		message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
+		message += " :Nickname is already in use\n\r";
+		send(sending_user->getFd(), message.c_str(), message.size(), 0);
+		return (1);
+	}
+	else
+	{
+		if (isValidNick(parsed_message[1]))
+			sending_user->setNick(parsed_message[1]);
+		else
+		{
+			std::string message;
+			message += ":server 432 ";
+			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
+			message += " :Erroneous Nickname\n\r";
+			send(sending_user->getFd(), message.c_str(), message.size(), 0);
+			return (1);
+		}	
+	}
+	return (0);
+}

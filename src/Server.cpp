@@ -195,28 +195,8 @@ int Server::authenticate_user(std::vector<std::string> parsed_message, User *sen
 	}
 	else if (parsed_message[0] == "NICK")
 	{
-		if (parsed_message.size() < 2 || parsed_message[1].empty())
-		{
-			std::string message;
-			message += ":server 461 ";
-			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
-			message += " :Not enough parameters\n\r";
-			send(sending_user->getFd(), message.c_str(), message.size(), 0);
+		if (cmdNick(parsed_message, sending_user))
 			return (1);
-		}
-		if (check_existing_user(_users, parsed_message[1]))
-		{
-			std::string message;
-			message += ":server 433 ";
-			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
-			message += " :Nickname is already in use\n\r";
-			send(sending_user->getFd(), message.c_str(), message.size(), 0);
-			return (1);
-		}
-		else
-		{
-			sending_user->setNick(parsed_message[1]);		
-		}
 	}
 	else if (parsed_message[0] == "USER")
 	{
@@ -279,30 +259,7 @@ int Server::check_already_registered(std::vector<std::string> parsed_message, Us
 		return (1);
 	}
 	if (parsed_message[0] == "NICK")
-	{
-		if (parsed_message.size() < 2 || parsed_message[1].empty())
-		{
-			std::string message;
-			message += ":server 461 ";
-			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
-			message += " :Not enough parameters\n\r";
-			send(sending_user->getFd(), message.c_str(), message.size(), 0);
-			return (1);
-		}
-		if (check_existing_user(_users, parsed_message[1]))
-		{
-			std::string message;
-			message += ":server 433 ";
-			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
-			message += " :Nickname is already in use\n\r";
-			send(sending_user->getFd(), message.c_str(), message.size(), 0);
-			return (1);
-		}
-		else
-		{
-			sending_user->setNick(parsed_message[1]);		
-		}
-	}
+		return (cmdNick(parsed_message, sending_user), 1);
 	return (0);
 }
 

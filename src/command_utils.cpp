@@ -67,7 +67,7 @@ void		Server::join_message_confirm(User &user, Channel& channel) const
 {
 	// Standard IRC Replies for JOIN
 	std::string join_msg = ":" + user.getNick() + " JOIN #" + channel.getName() + "\r\n";
-	channel.writeToChannel(join_msg, user.getNick());
+	channel.writeToChannel(join_msg, "");
 	std::string topic_msg = ":server 332 " + user.getNick() + " #" + channel.getName() + " :" + channel.getTopic() + "\r\n";
 	send(user.getFd(), topic_msg.c_str(), topic_msg.size(), 0);
 	std::string users_list = channel.getNickList();

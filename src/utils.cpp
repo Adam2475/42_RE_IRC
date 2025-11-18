@@ -1,5 +1,49 @@
 #include "../inc/header.hpp"
 
+static bool isNickFirstChar(char c)
+{
+    if (std::isalpha(static_cast<unsigned char>(c)))
+        return true;
+
+    switch (c) {
+        case '[': case ']': case '\\':
+        case '`': case '^': case '{': case '}': case '|':
+            return true;
+        default:
+            return false;
+    }
+}
+
+static bool isNickChar(char c)
+{
+    if (std::isalnum(static_cast<unsigned char>(c)))
+        return true;
+
+    switch (c) {
+        case '-': case '[': case ']': case '\\':
+        case '`': case '^': case '{': case '}': case '|':
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool isValidNick(const std::string &nick)
+{
+    if (nick.empty())
+        return false;
+
+    if (!isNickFirstChar(nick[0]))
+        return false;
+
+    for (std::size_t i = 1; i < nick.size(); ++i) {
+        if (!isNickChar(nick[i]))
+            return false;
+    }
+
+    return true;
+}
+
 int removeInitialHash(std::string *target)
 {
     if (target->find_first_of('#') == std::string::npos)
