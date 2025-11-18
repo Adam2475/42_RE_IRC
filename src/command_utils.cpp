@@ -50,7 +50,7 @@ std::string message_formatter2(int error, std::string command, const char* messa
 void    Server::channelCreate(std::string& channelName, std::string& pass, User& user)
 {
 	std::string topic;
-	Channel new_channel(channelName, pass, user, topic, -1, 0, 0);
+	Channel new_channel(channelName, pass, user, topic, -1, 0, 1);
 	_channels.push_back(new_channel);
 	// Standard IRC Replies for successful channel creation and join
     std::string join_msg = ":" + user.getNick() + " JOIN #" + channelName + "\r\n";
