@@ -43,7 +43,7 @@ std::string message_formatter2(int error, std::string command, const char* messa
 	std::string msg;
 	std::ostringstream oss;
 	oss << error;
-	msg  = ":server" + oss.str() + ' ' + command + " :" + message;
+	msg  = ":server" + oss.str() + ' ' + command + " :" + message + "\r\n";
 	return (msg);
 }
 
