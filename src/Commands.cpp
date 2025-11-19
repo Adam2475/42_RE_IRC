@@ -66,7 +66,7 @@ int Server::cmdJoin(std::vector<std::string>& mess, User &user)
 	std::string channelName;
 	std::string pass;
 
-	std::cout << "detected command JOIN" << mess[0] << std::endl;
+	// std::cout << "detected command JOIN" << mess[0] << std::endl;
 	mess.erase(mess.begin());
 	channelName = mess[0];
 	if (mess[0].empty())
@@ -93,7 +93,7 @@ int Server::cmdJoin(std::vector<std::string>& mess, User &user)
 		return 1;
 	else if (result == 0)
 		return 0;
-	std::cout << channelName << " channel not found, creating..." << std::endl;
+	//std::cout << channelName << " channel not found, creating..." << std::endl;
 	channelCreate(channelName, pass, user);
 	return 0;
 }
@@ -172,6 +172,76 @@ int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
 		is_channel ? _channels[i].writeToChannel(out, user.getNick()) : (void)send(_users[i].getFd(), out.c_str(), out.size(), 0);
 	}
     return (0);
+}
+
+int Server::cmdWho(std::vector<std::string> parsed_message, User &user)
+{
+    std::string target = "";
+    if (parsed_message.size() > 1)
+        target = parsed_message[1];
+
+
+    if (!target.empty() && target[0] == '#')
+    {
+        target = target.substr(1);
+        Channel *ch = findChannelByName(target);
+        if (!ch)
+        {
+            std::string msg = ":server 403 ";
+            msg += user.getNick();
+            msg += " #";
+            msg += target;
+            msg += " :No such channel\r\n";
+            send(user.getFd(), msg.c_str(), msg.size(), 0);
+            return 0;
+        }
+        // list users in channel
+        std::vector<User> channelUsers = ch->getUserVector();
+        for (size_t i = 0; i < channelUsers.size(); ++i)
+        {
+            std::string msg = ":server 352 ";
+            msg += user.getNick();
+            msg += " #";
+            msg += target;
+            msg += " ";
+            msg += channelUsers[i].getUser();
+            msg += " localhost ";
+            msg += "server ";
+            msg += channelUsers[i].getNick();
+            msg += " H :0 ";
+            msg += channelUsers[i].getNick();
+            msg += "\r\n";
+            send(user.getFd(), msg.c_str(), msg.size(), 0);
+        }
+    }
+    else
+    {
+        // list all users on server
+        for (size_t i = 0; i < _users.size(); ++i)
+        {
+            std::string msg = ":server 352 ";
+            msg += user.getNick();
+            msg += " * ";
+            msg += _users[i].getUser();
+            msg += " localhost ";
+            msg += "server ";
+            msg += _users[i].getNick();
+            msg += " H :0 ";
+            msg += _users[i].getNick();
+            msg += "\r\n";
+            send(user.getFd(), msg.c_str(), msg.size(), 0);
+        }
+    }
+
+    // send end-of-list
+    std::string end_msg = ":server 315 ";
+    end_msg += user.getNick();
+    end_msg += " ";
+    end_msg += (target.empty() ? "*" : target);
+    end_msg += " :End of WHO list\r\n";
+    send(user.getFd(), end_msg.c_str(), end_msg.size(), 0);
+
+    return 0;
 }
 
 int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
