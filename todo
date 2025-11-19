@@ -2,12 +2,14 @@
 - set max size for user and nick
 - handle commands over 512
 - check already existing nicknames | OK
+- check for invalid chars in NICK | OK
 - check existing usernames
 - channel creation segfaults | OK
 - channel get created with an extra hash | OK
 - implement "JOIN 0"
-- add check if part of the channel to PRIVMSG | OK 
+- add check if part of the channel to PRIVMSG | OK
 - channel user list breaks after changing NICK
+- check for invalid chars in USER
 
 // when no external messages mode set
 
