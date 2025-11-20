@@ -311,11 +311,14 @@ void Server::start_main_loop()
 				if (status > 0)
 				{
 					// append message to user buffer
+					// append message to user buffer
+					int user_fd = _poll_fds[i].fd;
 					sending_user->_buffer.append(buffer, (size_t)status);
 					
 					// search newline in the string
 					std::string tmp = sending_user->_buffer;
 					size_t newline_pos;
+					bool user_still_exists = true;
 
 					while ((newline_pos = tmp.find('\n')) != std::string::npos)
 					{
@@ -336,10 +339,24 @@ void Server::start_main_loop()
 						//std::cout << line << std::endl;
 						
 						if (handle_commands(parsed_message, sending_user))
+						{
+							// command was handled; the command may have disconnected the user
+							if (getUserByFd(user_fd) == NULL)
+							{
+								user_still_exists = false;
+								break;
+							}
+							// user still present, continue processing next line
 							continue;
+						}
 					}
-					// save any remaining partial data back into the user's buffer
-                    sending_user->_buffer = tmp;
+				// save any remaining partial data back into the user's buffer
+				if (user_still_exists)
+				{
+					User *maybe_user = getUserByFd(user_fd);
+					if (maybe_user)
+						maybe_user->_buffer = tmp;
+				}
 				}
 				// handle client disconnection
 				else if (status == 0)
