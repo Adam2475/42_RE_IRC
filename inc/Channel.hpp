@@ -79,6 +79,9 @@ class Channel
 		int modeMaxUsers(std::vector<std::string>& msg_parsed, std::string& arg, User& user);
 		int modeOperator(std::string& arg, User& user, User* new_operator);
 		void modeTopic(std::string& arg);
+
+		// Ensure channel's internal User copies reflect a nick change (match by fd)
+		void updateUserNickByFd(int fd, const std::string& newNick);
 };
 
 #endif

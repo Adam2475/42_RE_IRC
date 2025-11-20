@@ -177,7 +177,7 @@ void Channel::showChannelTopic(User &user, const std::string serverName)
               + " :" + topic + "\r\n";
     }
 
-    send(user.getFd(), reply.c_str(), reply.size(), 0);
+	send(user.getFd(), reply.c_str(), reply.size(), MSG_NOSIGNAL);
 }
 
 void	Channel::partUser(User& user, Channel &channel, std::string msg, int mode)
@@ -212,8 +212,8 @@ void	Channel::partUser(User& user, Channel &channel, std::string msg, int mode)
 		part_msg = ":" + user_prefix + " QUIT" + " :" + msg + "\r\n";
 
     // Broadcast to all users in the channel (including the sender)
-    channel.writeToChannel(part_msg, user.getNick());
-    send(user.getFd(), part_msg.c_str(), part_msg.size(), 0);
+	channel.writeToChannel(part_msg, user.getNick());
+	send(user.getFd(), part_msg.c_str(), part_msg.size(), MSG_NOSIGNAL);
 	if (channel.getUserVector().size() == 0)
 	{
 		_name.erase(0, _name.size());
@@ -232,19 +232,19 @@ void	Channel::addUserToChannel(User& user, std::string& passwd)
 	if (!_passwd.empty() && _passwd.compare(passwd) != 0)
 	{
 		std::string tmp(message_formatter(475, user.getNick(), _name, "Cannot join channel (+k)"));
-		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
+		send(user.getFd(), tmp.c_str(), tmp.size(), MSG_NOSIGNAL);
 		return ;
 	}
 	if (isInVector(user, _user_vector))
 	{
 		std::string tmp(message_formatter(443, user.getNick(), _name, "is already on channel"));
-		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
+		send(user.getFd(), tmp.c_str(), tmp.size(), MSG_NOSIGNAL);
 		return ;
 	}
 	if (_max_users == static_cast<size_t>(-1) && (_user_vector.size() + 1 >= _max_users))
 	{
 		std::string tmp(message_formatter(471, user.getNick(), _name, "Channel is full"));
-		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
+		send(user.getFd(), tmp.c_str(), tmp.size(), MSG_NOSIGNAL);
 		return ;
 	}
 	else
@@ -258,13 +258,13 @@ void	Channel::addUserToOperatorsVector(User& user, User& user_operator)
 	{
 		// 481 ERR_NOPRIVILEGES
 		std::string tmp(message_formatter(481, user_operator.getNick(), _name, "You're not an operator"));
-		send(user_operator.getFd(), tmp.c_str(), tmp.size(), 0);
+		send(user_operator.getFd(), tmp.c_str(), tmp.size(), MSG_NOSIGNAL);
 		return ;
 	}
 	else if (!isInVector(user, _user_vector))
 	{
 		std::string tmp(message_formatter(442, user.getNick(), _name, "You are not part of the channel"));
-		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
+		send(user.getFd(), tmp.c_str(), tmp.size(), MSG_NOSIGNAL);
 		return ;
 	}
 	else
@@ -277,7 +277,21 @@ void Channel::writeToChannel(std::string& buffer, std::string sending_nick) cons
 	for (std::vector<User>::const_iterator it = _user_vector.begin(); it != _user_vector.end(); ++it)
 	{
 		if (it->getNick() != sending_nick)
-			send(it->getFd(), buffer.c_str(), buffer.size(), 0);
+			send(it->getFd(), buffer.c_str(), buffer.size(), MSG_NOSIGNAL);
+	}
+}
+
+void Channel::updateUserNickByFd(int fd, const std::string& newNick)
+{
+	for (size_t i = 0; i < _user_vector.size(); ++i)
+	{
+		if (_user_vector[i].getFd() == fd)
+			_user_vector[i].setNick(newNick);
+	}
+	for (size_t i = 0; i < _operators_vector.size(); ++i)
+	{
+		if (_operators_vector[i].getFd() == fd)
+			_operators_vector[i].setNick(newNick);
 	}
 }
 
@@ -311,7 +325,7 @@ int	Channel::modeMaxUsers(std::vector<std::string>& msg_parsed, std::string& arg
 	{
 		std::cout << RED << _name << " flag +l: number not inserted" << RESET << std::endl;
 		std::string mode_err = "461 " + user.getNick() + " MODE: need more params\r\n";
-		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
+		send(user.getFd(), mode_err.c_str(), mode_err.size(), MSG_NOSIGNAL);
 		return 1;
 	}
 	else if (arg[0] == '+')
@@ -332,7 +346,7 @@ int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 		std::string mode_err = ":server 441" + user.getNick()
 		+ ' ' + new_operator->getNick()
 		+ ' ' + _name + " :They aren't on that channel\r\n";
-		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
+		send(user.getFd(), mode_err.c_str(), mode_err.size(), MSG_NOSIGNAL);
 		return 1;
 	}
 	if (arg[0] == '-')
