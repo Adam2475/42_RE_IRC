@@ -49,6 +49,11 @@ Channel::~Channel()
 // Getters
 /////////////
 
+std::string	Channel::getPassword() const
+{
+	return _passwd;
+}
+
 std::vector<User> Channel::getUserVector() const
 {
 	std::vector<User> new_vect(_user_vector);
@@ -209,6 +214,15 @@ void	Channel::partUser(User& user, Channel &channel, std::string msg, int mode)
     // Broadcast to all users in the channel (including the sender)
     channel.writeToChannel(part_msg, user.getNick());
     send(user.getFd(), part_msg.c_str(), part_msg.size(), 0);
+	if (channel.getUserVector().size() == 0)
+	{
+		_name.erase(0, _name.size());
+		return ;
+	}
+	if (channel.getUserOperatorsVector().size() == 0 && channel.getUserVector().size() > 0)
+	{
+		channel._operators_vector.push_back(*channel.getUserVector().begin());
+	}
 }
 
 void	Channel::addUserToChannel(User& user, std::string& passwd)
@@ -311,7 +325,7 @@ int	Channel::modeMaxUsers(std::vector<std::string>& msg_parsed, std::string& arg
 int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 {
 	std::cout << GREEN << "entro nell'OPERATORS mode" << RESET << std::endl;
-	if(std::find(_user_vector.begin(), _user_vector.end(), *new_operator) == _user_vector.end())
+	if(std::find(this->_user_vector.begin(), this->_user_vector.end(), *new_operator) == this->_user_vector.end())
 	{
 		std::string mode_err = ":server 441" + user.getNick()
 		+ ' ' + new_operator->getNick()
@@ -321,18 +335,18 @@ int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 	}
 	if (arg[0] == '-')
 	{
-		if (isInVector(*new_operator, _operators_vector))
+		if (isInVector(*new_operator, this->_operators_vector))
 		{
-			_operators_vector.erase(std::find(_operators_vector.begin(), _operators_vector.end(), *new_operator));
+			this->_operators_vector.erase(std::find(_operators_vector.begin(), _operators_vector.end(), *new_operator));
 			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick() + "\r\n";
 			writeToChannel(confirm, user.getNick());
 		}
 	}
 	else if (arg[0] == '+')
 	{
-		if (isInVector(*new_operator, _operators_vector))
+		if (!isInVector(*new_operator, this->_operators_vector))
 		{
-			addUserToOperatorsVector(*new_operator, user);
+			this->_operators_vector.push_back(*new_operator);
 			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick() + "\r\n";
 			writeToChannel(confirm, user.getNick());
 		}

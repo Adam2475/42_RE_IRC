@@ -88,7 +88,6 @@ void Server::check_authentication(User *sending_user)
 
 Channel*	Server::findChannelByName(std::string channelName)
 {
-	Channel targetChannel;
  	for (std::vector<Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
         if (it->getName() == channelName)

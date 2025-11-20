@@ -55,6 +55,7 @@ class Channel
 		std::vector<User> getUserOperatorsVector() const;
 		std::string getName() const;
 		std::string	getTopic() const;
+		std::string	getPassword() const;
 		size_t  getMaxUsers() const;
 		bool 	getInviteOnly() const;
 		bool 	getTopicRestriction() const;

@@ -8,57 +8,57 @@ int Server::cmdPing(std::vector<std::string> parsed_message, User &user)
 	if (parsed_message.size() < 2)
 	{
 		std::string msg = ":server 461 " + user.getNick() + " PING :Not enough parameters\r\n";
-        send(user.getFd(), msg.c_str(), msg.size(), 0);
-        return (1);
+		send(user.getFd(), msg.c_str(), msg.size(), 0);
+		return (1);
 	}
 	else
 	{
 		std::string msg = "PONG " + parsed_message[1] + "\r\n";
 		send(user.getFd(), msg.c_str(), msg.size(), 0);
-        return (1);
+		return (1);
 	}
 }
 
 int Server::cmdPart(std::vector<std::string> parsed_message, User &user)
 {
-    std::string channelName;
+	std::string channelName;
 	std::string reason;
 
-    if (parsed_message.size() < 2)
-    {
-        std::string msg = ":server 461 " + user.getNick() + " PART :Not enough parameters\r\n";
-        send(user.getFd(), msg.c_str(), msg.size(), 0);
-        return 1;
-    }
+	if (parsed_message.size() < 2)
+	{
+		std::string msg = ":server 461 " + user.getNick() + " PART :Not enough parameters\r\n";
+		send(user.getFd(), msg.c_str(), msg.size(), 0);
+		return 1;
+	}
 	else
 	{
 		channelName = parsed_message[1];
 	}
 
-    if (channelName[0] == '#') {
-        channelName = channelName.substr(1);
-    }
+	if (channelName[0] == '#') {
+		channelName = channelName.substr(1);
+	}
 
-    Channel* targetChannel = findChannelByName(channelName);
+	Channel* targetChannel = findChannelByName(channelName);
 
-    if (targetChannel == NULL) {
-        // ERR_NOSUCHCHANNEL (403)
-        std::string msg = ":server 403 " + user.getNick() + " #" + channelName + " :No such channel\r\n";
-        send(user.getFd(), msg.c_str(), msg.size(), 0);
-        return 1;
-    }
+	if (targetChannel == NULL) {
+		// ERR_NOSUCHCHANNEL (403)
+		std::string msg = ":server 403 " + user.getNick() + " #" + channelName + " :No such channel\r\n";
+		send(user.getFd(), msg.c_str(), msg.size(), 0);
+		return 1;
+	}
 
-    if (!isInVector(user, targetChannel->getUserVector())) {
-        // ERR_NOTONCHANNEL (442)
-        std::string msg = ":server 442 " + user.getNick() + " #" + channelName + " :You're not on that channel\r\n";
-        send(user.getFd(), msg.c_str(), msg.size(), 0);
-        return 1;
-    }
+	if (!isInVector(user, targetChannel->getUserVector())) {
+		// ERR_NOTONCHANNEL (442)
+		std::string msg = ":server 442 " + user.getNick() + " #" + channelName + " :You're not on that channel\r\n";
+		send(user.getFd(), msg.c_str(), msg.size(), 0);
+		return 1;
+	}
 
 	reason = parsed_message.size() == 3 ? parsed_message[2] : "Leaving";
-    targetChannel->partUser(user, *targetChannel, reason, PART);
+	targetChannel->partUser(user, *targetChannel, reason, PART);
 
-    return 0;
+	return 0;
 }
 
 int Server::cmdJoin(std::vector<std::string>& mess, User &user)
@@ -171,7 +171,7 @@ int		Server::cmdPrivateMsg(std::vector<std::string> parsed_message, User &user)
 		std::string out = ":" + user.getNick() + " PRIVMSG " + target + " :" + msgBody + "\r\n";
 		is_channel ? _channels[i].writeToChannel(out, user.getNick()) : (void)send(_users[i].getFd(), out.c_str(), out.size(), 0);
 	}
-    return (0);
+	return (0);
 }
 
 int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
@@ -206,8 +206,8 @@ int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
 	}
 	if (channelName[0] == '#')
 	{
-        channelName = channelName.substr(1);
-    }
+		channelName = channelName.substr(1);
+	}
 	Channel *targetChannel = findChannelByName(channelName);
 
 	
@@ -231,29 +231,29 @@ int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
 	// checks
 
 	// Check if inviter is on the channel
-    if (!isInVector(user, targetChannel->getUserVector())) {
-        std::string err = ":server 442 " + user.getNick() + " #" + channelName + " :You're not on that channel\r\n";
-        send(user.getFd(), err.c_str(), err.size(), 0);
-        return 1;
-    }
+	if (!isInVector(user, targetChannel->getUserVector())) {
+		std::string err = ":server 442 " + user.getNick() + " #" + channelName + " :You're not on that channel\r\n";
+		send(user.getFd(), err.c_str(), err.size(), 0);
+		return 1;
+	}
 
 	// Check if target is already on the channel
-    if (isInVector(*targetUser, targetChannel->getUserVector())) {
-        std::string err = ":server 443 " + user.getNick() + " " + targetNick + " #" + channelName + " :is already on channel\r\n";
-        send(user.getFd(), err.c_str(), err.size(), 0);
-        return 1;
-    }
+	if (isInVector(*targetUser, targetChannel->getUserVector())) {
+		std::string err = ":server 443 " + user.getNick() + " " + targetNick + " #" + channelName + " :is already on channel\r\n";
+		send(user.getFd(), err.c_str(), err.size(), 0);
+		return 1;
+	}
 
 	// send invite
 	targetChannel->addToInvited(*targetUser);
 
 	// Send RPL_INVITING to user
-    std::string inviting_msg = ":server 341 " + user.getNick() + " " + targetNick + " #" + channelName + "\r\n";
-    send(user.getFd(), inviting_msg.c_str(), inviting_msg.size(), 0);
+	std::string inviting_msg = ":server 341 " + user.getNick() + " " + targetNick + " #" + channelName + "\r\n";
+	send(user.getFd(), inviting_msg.c_str(), inviting_msg.size(), 0);
 
-    // Send INVITE to target user
-    std::string invite_msg = ":" + user.getNick() + " INVITE " + targetNick + " :#" + channelName + "\r\n";
-    send(targetUser->getFd(), invite_msg.c_str(), invite_msg.size(), 0);
+	// Send INVITE to target user
+	std::string invite_msg = ":" + user.getNick() + " INVITE " + targetNick + " :#" + channelName + "\r\n";
+	send(targetUser->getFd(), invite_msg.c_str(), invite_msg.size(), 0);
 
 
 	return (0);
@@ -334,6 +334,14 @@ int		Server::cmdTopic(std::vector<std::string> parsed_message, User &user)
 	return (0);
 }
 
+void print_vec(std::vector<User>& parsed_message)
+{
+	for (size_t i = 0; i < parsed_message.size(); i++)
+	{
+		std::cout << parsed_message[i].getNick() << ' ' << parsed_message[i].getFd() << ' ' << i << std::endl;
+	}
+}
+
 int	Server::checkCmdMode(std::vector<std::string>& msg_parsed, User& user, Channel* targetChannel, std::string& channelName)
 {
 	if (targetChannel == NULL)
@@ -343,18 +351,44 @@ int	Server::checkCmdMode(std::vector<std::string>& msg_parsed, User& user, Chann
 		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
 		return 1;
 	}
-	if (!isInVector(user, targetChannel->getUserOperatorsVector()))
+	if (!isInVector(user, targetChannel->getUserVector()))
 	{
-		std::cout << RED << user.getNick() << " not an operator" << RESET << std::endl;
-		std::string mode_err = message_formatter(482, user.getNick(), channelName, "You're not channel operator");
+		std::string mode_err = message_formatter(442, user.getNick(), channelName, "You're not on channel");
 		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
 		return 1;
 	}
 	msg_parsed.erase(msg_parsed.begin());
 	if (msg_parsed.size() == 0)
 	{
-		std::cout << RED << channelName << " flag not present" << RESET << std::endl;
-		std::string mode_err = "461 " + user.getNick() + " MODE: need more params\r\n";
+		std::string modes;
+		if (targetChannel->getTopicRestriction())
+			modes += 't';
+		if (!targetChannel->getPassword().empty())
+			modes += 'k';
+		if (targetChannel->getMaxUsers())
+			modes += 'l';
+		if (targetChannel->getInviteOnly())
+			modes += 'i';
+		std::string reply = ":server 324 " + user.getNick() +
+							" #" + channelName + " +" + modes;
+		if (!targetChannel->getPassword().empty())
+			reply += " " + targetChannel->getPassword();
+		if (targetChannel->getMaxUsers() > 0)
+		{
+			std::stringstream ss;
+			ss << targetChannel->getMaxUsers();
+			reply += " " + ss.str();
+		}
+		reply += "\r\n";
+		send(user.getFd(), reply.c_str(), reply.size(), 0);
+		return 0;
+	}
+	if (!isInVector(user, targetChannel->getUserOperatorsVector()))
+	{
+		std::vector<User> vect = targetChannel->getUserOperatorsVector();
+		print_vec(vect);
+		std::cout << RED << user.getNick() << " not an operator" << RESET << std::endl;
+		std::string mode_err = message_formatter(482, user.getNick(), channelName, "You're not channel operator");
 		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
 		return 1;
 	}
@@ -362,7 +396,7 @@ int	Server::checkCmdMode(std::vector<std::string>& msg_parsed, User& user, Chann
 	std::string mode[11] = {"+b", "+i", "-i", "+k", "-k", "+o", "-o", "+l", "-l", "+t", "-t"};
 	if (std::find(mode, mode+11, flag) == mode + 11)
 	{
-		std::cout << RED << channelName << " unknown flag" << RESET << std::endl;
+		std::cout << RED << channelName << " unknown flag " << flag << RESET << std::endl;
 		std::string mode_err = "501 " + user.getNick() + " :Unknown MODE flag\r\n";
 		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
 		return 1;
@@ -385,6 +419,8 @@ int Server::cmdMode(std::vector<std::string>& msg_parsed, User& user)
 	Channel *targetChannel = findChannelByName(channelName);
 	if (checkCmdMode(msg_parsed, user, targetChannel, channelName))
 		return 1;
+	if (msg_parsed.size() == 0)
+		return 0;
 	std::string flag = msg_parsed[0];
 	if (flag[1] == 'i')
 		targetChannel->modeInvite(flag);

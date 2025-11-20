@@ -50,7 +50,7 @@ std::string message_formatter2(int error, std::string command, const char* messa
 void    Server::channelCreate(std::string& channelName, std::string& pass, User& user)
 {
 	std::string topic;
-	Channel new_channel(channelName, pass, user, topic, -1, 0, 1);
+	Channel new_channel(channelName, pass, user, topic, 0, 0, 1);
 	_channels.push_back(new_channel);
 	// Standard IRC Replies for successful channel creation and join
     std::string join_msg = ":" + user.getNick() + " JOIN #" + channelName + "\r\n";
@@ -78,14 +78,6 @@ void		Server::join_message_confirm(User &user, Channel& channel) const
 }
 
 
-void print_vec(std::vector<User>& parsed_message)
-{
-	for (size_t i = 0; i < parsed_message.size(); i++)
-	{
-		std::cout << parsed_message[i].getNick() << ' ' << parsed_message[i].getFd() << ' ' << i << std::endl;
-	}
-}
-
 int		Server::channelAdder(std::string& channelName, User& user, std::string& pass)
 {
 	std::vector<Channel>::iterator channelIterator = _channels.begin();
@@ -102,10 +94,10 @@ int		Server::channelAdder(std::string& channelName, User& user, std::string& pas
 				{
 					size_t i = 0;
 					std::vector<User> invited_vect = channelIterator->getInvitedUsersVector();
-					print_vec(invited_vect);
+					// print_vec(invited_vect);
 					while (i < invited_vect.size())
 					{
-						std::cout << YELLOW << invited_vect[i].getNick() << RESET << std::endl;
+						// std::cout << YELLOW << invited_vect[i].getNick() << RESET << std::endl;
 						if (invited_vect[i] == user)
 						{
 							channelIterator->addUserToChannel(user, pass);
