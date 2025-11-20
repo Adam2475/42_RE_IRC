@@ -8,6 +8,7 @@
 - implement "JOIN 0"
 - channel user list breaks after changing NICK
 - check for invalid chars in USER
+- L'operatore verrà identificato dal nick preceduto dal simbolo della chiocciola: @nick. 
 
 #non-compliant
 

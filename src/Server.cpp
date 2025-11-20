@@ -165,6 +165,10 @@ int Server::check_commands(std::vector<std::string> parsed_message, User *sendin
 		cmdWho(parsed_message, *sending_user);
 		return (1);
 	}
+	if (parsed_message[0] == "USERHOST")
+	{
+		return (1);
+	}
 	return (0);
 }
 
