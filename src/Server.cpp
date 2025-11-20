@@ -208,19 +208,8 @@ int Server::authenticate_user(std::vector<std::string> parsed_message, User *sen
 	}
 	else if (parsed_message[0] == "USER")
 	{
-		if (parsed_message.size() != 5)
-		{
-			std::string message;
-			message += ":server 461 ";
-			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
-			message += " :USER :Not enough parameters\n\r";
-			send(sending_user->getFd(), message.c_str(), message.size(), 0);
+		if (cmdUser(parsed_message, sending_user))
 			return (1);
-		}
-		else
-		{
-			sending_user->setUser(parsed_message[1]);
-		}
 	}
 	check_authentication(sending_user);
 	return (0);

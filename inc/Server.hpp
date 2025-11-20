@@ -61,6 +61,7 @@ class Server
 		int cmdKick(std::vector<std::string> parsed_message, User &user);
 		int	cmdNick(std::vector<std::string> parsed_message, User *sending_user);
 		int cmdWho(std::vector<std::string> parsed_message, User &user);
+		int	cmdUser(std::vector<std::string> parsed_message, User *sending_user);
 };
 
 std::string message_formatter2(int error, std::string command, const char* message);
