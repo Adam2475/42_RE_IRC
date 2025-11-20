@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <poll.h>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <sstream>
 // #include <fcntl.h>

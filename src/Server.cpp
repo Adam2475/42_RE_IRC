@@ -113,11 +113,79 @@ void signalHandler(int sig)
 	exit_code = sig;
 }
 
+std::vector<std::string> stringSplit(const std::string& s, char delim)
+{
+    std::vector<std::string> result;
+    std::stringstream ss(s);
+    std::string item;
+
+    while (std::getline(ss, item, delim))
+        result.push_back(item);
+
+    return result;
+}
+
+
+int Server::multipleJoin(std::vector<std::string>& channelsNames, User& sendingUser)
+{
+	std::vector<std::string> joinVect;
+	for (size_t i = 0; i < channelsNames.size(); i++)
+	{
+		joinVect.push_back("JOIN");
+		joinVect.push_back(channelsNames[i]);
+		cmdJoin(joinVect, sendingUser);
+		joinVect.clear();
+	}
+	return 0;
+}
+
+int Server::multipleJoinPass(std::vector<std::string>& channelsNames, std::vector<std::string>& passwds, User& sendingUser)
+{
+	std::map<std::string, std::string> channelKeyMap;
+	if (passwds.size() == 1)
+	{
+		size_t i = 0;
+		while (i < channelsNames.size())
+			channelKeyMap.insert(std::make_pair(channelsNames[i++], passwds[0]));
+	}
+	else
+	{
+		size_t i = 0;
+		while (i < channelsNames.size() && i < passwds.size())
+		{
+			channelKeyMap.insert(std::make_pair(channelsNames[i], passwds[i]));
+			i++;
+		}
+		while (i < channelsNames.size())
+		{
+			channelKeyMap.insert(std::make_pair(channelsNames[i], ""));
+			i++;
+		}
+	}
+	std::vector<std::string> joinVect;
+	for (std::map<std::string, std::string>::iterator it = channelKeyMap.begin(); it != channelKeyMap.end(); ++it)
+	{
+		joinVect.push_back("JOIN");
+		joinVect.push_back(it->first);
+		joinVect.push_back(it->second);
+		cmdJoin(joinVect, sendingUser);
+		joinVect.clear();
+	}
+	return 0;
+}
+
+
 int Server::check_commands(std::vector<std::string> parsed_message, User *sending_user)
 {
 	if (parsed_message[0] == "JOIN")
 	{
-		cmdJoin(parsed_message, *sending_user);
+		std::vector<std::string> multiple_channels;
+		std::vector<std::string> multiple_pass;
+		if (parsed_message.size() > 1)
+			multiple_channels = stringSplit(parsed_message[1], ',');
+		if (parsed_message.size() > 2)
+			multiple_pass = stringSplit(parsed_message[2], ',');
+		multipleJoinPass(multiple_channels, multiple_pass, *sending_user);
 		return (1);
 	}
 	if (parsed_message[0] == "QUIT")

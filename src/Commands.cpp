@@ -69,7 +69,7 @@ int Server::cmdJoin(std::vector<std::string>& mess, User &user)
 	// std::cout << "detected command JOIN" << mess[0] << std::endl;
 	mess.erase(mess.begin());
 	channelName = mess[0];
-	if (mess[0].empty())
+	if (mess[0].empty() || isStrNotPrintable(mess[0].c_str()))
 	{
 		std::string tmp(message_formatter2(461, "JOIN", "Not enough parameters"));
 		send(user.getFd(), tmp.c_str(), tmp.size(), 0);
@@ -451,7 +451,7 @@ int	Server::checkCmdMode(std::vector<std::string>& msg_parsed, User& user, Chann
 		}
 		reply += "\r\n";
 		send(user.getFd(), reply.c_str(), reply.size(), 0);
-		return 0;
+		return 1;
 	}
 	if (!isInVector(user, targetChannel->getUserOperatorsVector()))
 	{

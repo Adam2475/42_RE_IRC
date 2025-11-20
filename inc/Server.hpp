@@ -51,6 +51,8 @@ class Server
 		// Commands
 		///////////////////
 		int cmdJoin(std::vector<std::string>& mess, User &user);
+		int multipleJoin(std::vector<std::string>& channelsNames, User& sendingUser);
+		int multipleJoinPass(std::vector<std::string>& channelsNames, std::vector<std::string>& passwds, User& sendingUser);
 		int cmdQuit(std::vector<std::string> parsed_message, User &user);
 		int cmdPrivateMsg(std::vector<std::string> parsed_message, User &user);
 		int cmdPart(std::vector<std::string> parsed_message, User &user);
