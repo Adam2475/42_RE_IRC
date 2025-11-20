@@ -222,6 +222,8 @@ void	Channel::partUser(User& user, Channel &channel, std::string msg, int mode)
 	if (channel.getUserOperatorsVector().size() == 0 && channel.getUserVector().size() > 0)
 	{
 		channel._operators_vector.push_back(*channel.getUserVector().begin());
+		std::string confirm = ":server MODE #" + _name + ' ' + user.getNick() + ' ' + channel.getUserVector().begin()->getNick() + "\r\n";
+		writeToChannel(confirm, user.getNick());
 	}
 }
 
