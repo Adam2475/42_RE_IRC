@@ -160,6 +160,11 @@ int Server::check_commands(std::vector<std::string> parsed_message, User *sendin
 		cmdKick(parsed_message, *sending_user);
 		return (1);
 	}
+	if (parsed_message[0] == "WHO")
+	{
+		cmdWho(parsed_message, *sending_user);
+		return (1);
+	}
 	return (0);
 }
 

@@ -95,7 +95,6 @@ std::vector<std::string> parse_message(std::string buffer)
 		}
 		else
 			tmp.push_back(word);
-        //std::cout << word << std::endl;
     }
 	if (!tmp2.empty())
 	{

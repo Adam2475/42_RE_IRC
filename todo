@@ -1,24 +1,33 @@
+#errors
+
 - close connection when inputted wrong PASS (?)
 - set max size for user and nick
 - handle commands over 512
-- check already existing nicknames | OK
 - check existing usernames
-- channel creation segfaults | OK
-- channel get created with an extra hash | OK
+- fix the command not found reply on konversation
 - implement "JOIN 0"
-- add check if part of the channel to PRIVMSG | OK 
 - channel user list breaks after changing NICK
+- check for invalid chars in USER
 
-// when no external messages mode set
+#non-compliant
 
-////////////////////
-// Test Use Cases
-////////////////////
+- TOPIC without arguments should return the topic
 
-PASS
+#fixed
 
-NICK
+- check already existing nicknames #OK
+- check for invalid chars in NICK #OK
+- channel creation segfaults #OK
+- channel get created with an extra hash #OK
+- add check if part of the channel to PRIVMSG #OK
 
-USER
+#PASS
 
-PRIVMSG
+- valid case:
+
+
+#NICK
+
+#USER
+
+#PRIVMSG
