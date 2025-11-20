@@ -277,7 +277,21 @@ void Channel::writeToChannel(std::string& buffer, std::string sending_nick) cons
 	for (std::vector<User>::const_iterator it = _user_vector.begin(); it != _user_vector.end(); ++it)
 	{
 		if (it->getNick() != sending_nick)
-			send(it->getFd(), buffer.c_str(), buffer.size(), 0);
+			send(it->getFd(), buffer.c_str(), buffer.size(), MSG_NOSIGNAL);
+	}
+}
+
+void Channel::updateUserNickByFd(int fd, const std::string& newNick)
+{
+	for (size_t i = 0; i < _user_vector.size(); ++i)
+	{
+		if (_user_vector[i].getFd() == fd)
+			_user_vector[i].setNick(newNick);
+	}
+	for (size_t i = 0; i < _operators_vector.size(); ++i)
+	{
+		if (_operators_vector[i].getFd() == fd)
+			_operators_vector[i].setNick(newNick);
 	}
 }
 

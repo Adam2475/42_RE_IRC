@@ -6,7 +6,6 @@
 - check existing usernames
 - fix the command not found reply on konversation
 - implement "JOIN 0"
-- channel user list breaks after changing NICK
 - L'operatore verrà identificato dal nick preceduto dal simbolo della chiocciola: @nick.
 - INVITE for invite only channels must work only is user is operator
 
@@ -16,6 +15,7 @@
 
 #fixed
 
+- channel user list breaks after changing NICK | OK
 - server crashes when exiting konversation while in multiple channels | OK
 - check for invalid chars in USER | OK
 - check already existing nicknames | OK

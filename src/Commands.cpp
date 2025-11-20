@@ -1,6 +1,7 @@
 #include "../inc/header.hpp"
 #include "../inc/Server.hpp"
 #include "../inc/User.hpp"
+#include <set>
 
 int Server::cmdPing(std::vector<std::string> parsed_message, User &user)
 {
@@ -642,7 +643,54 @@ int		Server::cmdNick(std::vector<std::string> parsed_message, User *sending_user
 	else
 	{
 		if (isValidNick(parsed_message[1]))
-			sending_user->setNick(parsed_message[1]);
+		{
+			// store old nick for the broadcast and update
+			std::string oldNick = sending_user->getNick();
+			std::string newNick = parsed_message[1];
+
+			// change the nick on the User object
+			sending_user->setNick(newNick);
+
+			if (!oldNick.empty())
+			{
+				// update nick inside channel user lists (match by fd)
+				for (size_t i = 0; i < _channels.size(); ++i)
+				{
+					_channels[i].updateUserNickByFd(sending_user->getFd(), newNick);
+				}
+
+				std::string prefixUser = sending_user->getUser();
+				std::string broadcast = ":" + oldNick + "!" + prefixUser + "@host NICK " + newNick + "\r\n";
+
+				// recipients = changer + all users who share any channel with changer
+				std::set<int> recipients;
+				recipients.insert(sending_user->getFd());
+				for (size_t ci = 0; ci < _channels.size(); ++ci)
+				{
+					std::vector<User> chUsers = _channels[ci].getUserVector();
+					// if changer is in this channel, add all channel members
+					bool inChannel = false;
+					for (size_t uj = 0; uj < chUsers.size(); ++uj)
+					{
+						if (chUsers[uj].getFd() == sending_user->getFd())
+						{
+							inChannel = true;
+							break;
+						}
+					}
+					if (inChannel)
+					{
+						for (size_t uj = 0; uj < chUsers.size(); ++uj)
+							recipients.insert(chUsers[uj].getFd());
+					}
+				}
+
+				for (std::set<int>::iterator it = recipients.begin(); it != recipients.end(); ++it)
+				{
+					send(*it, broadcast.c_str(), broadcast.size(), 0);
+				}
+			}
+		}
 		else
 		{
 			std::string message;
@@ -651,7 +699,7 @@ int		Server::cmdNick(std::vector<std::string> parsed_message, User *sending_user
 			message += " :Erroneous Nickname\n\r";
 			send(sending_user->getFd(), message.c_str(), message.size(), 0);
 			return (1);
-		}	
+		}
 	}
 	return (0);
 }
