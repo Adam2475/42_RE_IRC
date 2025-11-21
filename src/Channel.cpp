@@ -180,6 +180,39 @@ void Channel::showChannelTopic(User &user, const std::string serverName)
 	send(user.getFd(), reply.c_str(), reply.size(), MSG_NOSIGNAL);
 }
 
+void	Channel::kickUser(User& user, User& user_operator, std::string reason)
+{
+	std::string reply_kick;
+	// :dan!d@localhost KICK #Melbourne alice :dan
+	if (reason.empty())
+		reply_kick = ":" + user_operator.getNick() + "!" + user.getUser() + 
+			"@localhost KICK #" + this->_name + ' ' + user.getNick() + " :" + user_operator.getNick() + "\r\n";
+	else
+		reply_kick = ":" + user_operator.getNick() + "!" + user.getUser() + 
+			"@localhost KICK #" + this->_name + ' ' + user.getNick() + " :" + reason + "\r\n";
+	this->writeToChannel(reply_kick, "");
+	std::vector<User>::iterator it;
+	for (it = _user_vector.begin(); it != _user_vector.end(); ++it)
+	{
+		if (*it == user)
+		{
+			_user_vector.erase(it);
+			break;
+		}
+	}
+	if (isInVector(user, _operators_vector))
+	{
+		for(it = _operators_vector.begin(); it != _operators_vector.end(); ++it)
+		{
+			if (*it == user)
+			{
+				_operators_vector.erase(it);
+				break;
+			}
+		}
+	}
+}
+
 void	Channel::partUser(User& user, Channel &channel, std::string msg, int mode)
 {
 	std::string channelName = channel.getName();
@@ -355,7 +388,7 @@ int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 		{
 			this->_operators_vector.erase(std::find(_operators_vector.begin(), _operators_vector.end(), *new_operator));
 			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick() + "\r\n";
-			writeToChannel(confirm, user.getNick());
+			writeToChannel(confirm, "");
 		}
 	}
 	else if (arg[0] == '+')
@@ -364,7 +397,7 @@ int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 		{
 			this->_operators_vector.push_back(*new_operator);
 			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick() + "\r\n";
-			writeToChannel(confirm, user.getNick());
+			writeToChannel(confirm, "");
 		}
 	}
 	return 0;

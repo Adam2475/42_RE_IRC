@@ -39,12 +39,11 @@ class Channel
 		// Channel Menagement
 		///////////////////////
 
-		// void	kickUser(User& user, User& user_operator, std::string msg);
+		void	kickUser(User& user, User& user_operator, std::string reason);
 		void	partUser(User& user, Channel &channel, std::string msg, int mode);
 		void	writeToChannel(std::string& buffer, std::string sending_nick) const;
 		void	showChannelTopic(User &user, const std::string serverName);
 		bool	isOperatorUser(User target_user) const;
-		// void	inviteUser(User& user, User& user_operator);
 
 		///////////////////////
 		// Getters & Setters

@@ -540,6 +540,7 @@ int		Server::cmdKick(std::vector<std::string> parsed_message, User &user)
 		channelName = parsed_message[1].substr(1);
 		targetChannel = findChannelByName(channelName);
 	}
+	std::cout << channelName << std::endl;
 	if (!targetChannel)
 	{
 		std::string kick_err = message_formatter2(403, "KICK", "no such channel");
@@ -559,12 +560,7 @@ int		Server::cmdKick(std::vector<std::string> parsed_message, User &user)
 		send(user.getFd(), kick_err.c_str(), kick_err.size(), 0);
 		return 1;
 	}
-	std::vector<User>::iterator it = std::find(
-			targetChannel->getUserVector().begin(),
-			targetChannel->getUserVector().end(),
-			*kicked_user
-		);
-	if (it == targetChannel->getUserVector().end())
+	if (!isInVector(*kicked_user, targetChannel->getUserVector()))
 	{
 		std::cout << RED << "didn't found the user" << RESET << std::endl;
 		std::string kick_err = ":server 441 "
@@ -574,16 +570,19 @@ int		Server::cmdKick(std::vector<std::string> parsed_message, User &user)
 		send(user.getFd(), kick_err.c_str(), kick_err.size(), 0);
 		return 1;
 	}
-	if (isInVector(*kicked_user, targetChannel->getUserOperatorsVector()))
+	std::stringstream reason;
+	if (parsed_message.size() >= 4)
 	{
-		std::vector<User>::iterator op_it = std::find(
-				targetChannel->getUserOperatorsVector().begin(),
-				targetChannel->getUserOperatorsVector().end(),
-				*kicked_user
-			);
-		targetChannel->getUserOperatorsVector().erase(op_it);
+		size_t i = 2;
+		while (++i < parsed_message.size())
+		{
+			if (i == 3)
+				reason << parsed_message[i];
+			else
+				reason << ' ' << parsed_message[i];
+		}
 	}
-	targetChannel->getUserVector().erase(it);
+	targetChannel->kickUser(*kicked_user, user, reason.str());
 	return 0;
 }
 
