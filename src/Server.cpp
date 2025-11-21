@@ -19,36 +19,36 @@ void Server::remove_from_pollfds(int clientSocket)
 {
 	for (size_t i = 0; i < _poll_fds.size(); ++i)
 	{
-        if (_poll_fds[i].fd == clientSocket)
+		if (_poll_fds[i].fd == clientSocket)
 		{
-            close(_poll_fds[i].fd);
-            _poll_fds.erase(_poll_fds.begin() + i);
-            break;
-        }
-    }
+			close(_poll_fds[i].fd);
+			_poll_fds.erase(_poll_fds.begin() + i);
+			break;
+		}
+	}
 }
 
 void Server::remove_from_user_vector(int clientSocket)
 {
-    for (size_t i = 0; i < _users.size(); ++i)
+	for (size_t i = 0; i < _users.size(); ++i)
 	{
-        if (_users[i].getFd() == clientSocket)
+		if (_users[i].getFd() == clientSocket)
 		{
-            _users.erase(_users.begin() + i);
-            break;
-        }
-    }	
+			_users.erase(_users.begin() + i);
+			break;
+		}
+	}	
 }
 
 void Server::remove_user_from_channels(int clientSocket, std::string quit_msg)
 {
 	User *quittingUser = getUserByFd(clientSocket);
 
-    for (std::vector<Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+	for (std::vector<Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
-        if (isInVector(*quittingUser, it->getUserVector()))
-            it->partUser(*quittingUser, *it, quit_msg, QUIT);
-    }	
+		if (isInVector(*quittingUser, it->getUserVector()))
+			it->partUser(*quittingUser, *it, quit_msg, QUIT);
+	}	
 }
 
 void Server::disconnectClient(int clientSocket, std::string quit_msg)
@@ -56,6 +56,7 @@ void Server::disconnectClient(int clientSocket, std::string quit_msg)
 	remove_user_from_channels(clientSocket, quit_msg);
 	remove_from_pollfds(clientSocket);
 	remove_from_user_vector(clientSocket);
+	close(clientSocket);
 	std::cout << "Client no: " << clientSocket << " disconnected" << std::endl;
 }
 
@@ -90,11 +91,11 @@ Channel*	Server::findChannelByName(std::string channelName)
 {
  	for (std::vector<Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
-        if (it->getName() == channelName)
+		if (it->getName() == channelName)
 		{
-            return &(*it);
-        }
-    }
+			return &(*it);
+		}
+	}
 	return NULL;
 }
 
@@ -111,18 +112,18 @@ static int exit_code = 0;
 void signalHandler(int sig)
 {
 	exit_code = sig;
+	throw(std::runtime_error(""));
 }
 
 std::vector<std::string> stringSplit(const std::string& s, char delim)
 {
-    std::vector<std::string> result;
-    std::stringstream ss(s);
-    std::string item;
+	std::vector<std::string> result;
+	std::stringstream ss(s);
+	std::string item;
 
-    while (std::getline(ss, item, delim))
-        result.push_back(item);
-
-    return result;
+	while (std::getline(ss, item, delim))
+		result.push_back(item);
+	return result;
 }
 
 
@@ -266,6 +267,7 @@ int Server::authenticate_user(std::vector<std::string> parsed_message, User *sen
 			message += sending_user->getNick().empty() ? "*" : sending_user->getNick();
 			message += " :Password Incorrect\n\r";
 			send(sending_user->getFd(), message.c_str(), message.size(), 0);
+			disconnectClient(sending_user->getFd(), "Connection timeout");
 			return (1);
 		}
 	}
@@ -343,6 +345,10 @@ void Server::start_main_loop()
 		signal(SIGINT, signalHandler);
 		//signal(SIGQUIT, signalHandler);
 		signal(SIGTSTP, signalHandler);
+		if (exit_code)
+		{
+			this->~Server();
+		}
 
 		if (exit_code)
 		{
@@ -372,7 +378,6 @@ void Server::start_main_loop()
 				if (status > 0)
 				{
 					// append message to user buffer
-					// append message to user buffer
 					int user_fd = _poll_fds[i].fd;
 					sending_user->_buffer.append(buffer, (size_t)status);
 					
@@ -384,16 +389,16 @@ void Server::start_main_loop()
 					while ((newline_pos = tmp.find('\n')) != std::string::npos)
 					{
 
-                        // take up to the newline (inclusive) and remove from buffer
-                        std::string line = tmp.substr(0, newline_pos + 1);
-                        tmp.erase(0, newline_pos + 1);
+						// take up to the newline (inclusive) and remove from buffer
+						std::string line = tmp.substr(0, newline_pos + 1);
+						tmp.erase(0, newline_pos + 1);
 
 						// strip trailing CR/LF
-                        while (!line.empty() && (line[line.size() - 1] == '\r' || line[line.size() - 1] == '\n'))
-                            line.erase(line.end() - 1);
+						while (!line.empty() && (line[line.size() - 1] == '\r' || line[line.size() - 1] == '\n'))
+							line.erase(line.end() - 1);
 
-                        if (line.empty())
-                            continue;
+						if (line.empty())
+							continue;
 
 						std::vector<std::string> parsed_message = parse_message(line);
 
@@ -433,10 +438,10 @@ void Server::start_main_loop()
 
 void Server::server_start()
 {
-    sockaddr_in serv_addr;
+	sockaddr_in serv_addr;
 
-    init_address(&serv_addr, _port);
-    if (create_socket(&_serv_fd))
+	init_address(&serv_addr, _port);
+	if (create_socket(&_serv_fd))
 		throw std::runtime_error("failed to create socket");
 	if (bind_socket(&_serv_fd, &serv_addr))
 		throw std::runtime_error("failed binding the socket");
@@ -448,6 +453,11 @@ void Server::server_start()
 		start_main_loop();
 	}
 	catch(const std::exception& e) {
+		for (std::vector<struct pollfd>::iterator it = _poll_fds.begin(); it != _poll_fds.end(); ++it)
+		{
+			if (it->fd > 0)
+				close(it->fd);
+		}
 		std::cerr << e.what() << '\n';
 	}
 }

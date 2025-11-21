@@ -405,11 +405,12 @@ int		Server::cmdTopic(std::vector<std::string> parsed_message, User &user)
 	return (0);
 }
 
-void print_vec(std::vector<User>& parsed_message)
+void print_vec(std::vector<std::string>& parsed_message)
 {
 	for (size_t i = 0; i < parsed_message.size(); i++)
 	{
-		std::cout << parsed_message[i].getNick() << ' ' << parsed_message[i].getFd() << ' ' << i << std::endl;
+		// std::cout << parsed_message[i].getNick() << ' ' << parsed_message[i].getFd() << ' ' << i << std::endl;
+		std::cout << YELLOW << parsed_message[i] << RESET << std::endl;
 	}
 }
 
@@ -454,10 +455,8 @@ int	Server::checkCmdMode(std::vector<std::string>& msg_parsed, User& user, Chann
 		send(user.getFd(), reply.c_str(), reply.size(), 0);
 		return 1;
 	}
-	if (!isInVector(user, targetChannel->getUserOperatorsVector()))
+	if (!isInVector(user, targetChannel->getUserOperatorsVector()) && msg_parsed[0] != "+b")
 	{
-		std::vector<User> vect = targetChannel->getUserOperatorsVector();
-		print_vec(vect);
 		std::cout << RED << user.getNick() << " not an operator" << RESET << std::endl;
 		std::string mode_err = message_formatter(482, user.getNick(), channelName, "You're not channel operator");
 		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
