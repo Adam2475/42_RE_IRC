@@ -1,4 +1,4 @@
-#errors
+# errors
 
 - close connection when inputted wrong PASS (?)
 - set max size for user and nick
@@ -8,13 +8,16 @@
 - implement "JOIN 0"
 - L'operatore verrà identificato dal nick preceduto dal simbolo della chiocciola: @nick.
 - INVITE for invite only channels must work only is user is operator
+- MODE #channel +o nickname: set user as operator but don't display on konversation
+- KICK command gives invalid read
+- *** You set the channel mode to 'invite only'. : missing reply for MODE
+- missing replies on MODE flags
 
-#non-compliant
+# non-compliant
 
-- TOPIC without arguments should return the topic
+# fixed
 
-#fixed
-
+- TOPIC with 1 argument should return the topic | OK
 - channel user list breaks after changing NICK | OK
 - server crashes when exiting konversation while in multiple channels | OK
 - check for invalid chars in USER | OK
@@ -24,10 +27,19 @@
 - channel get created with an extra hash | OK
 - add check if part of the channel to PRIVMSG | OK
 
-#PASS
+# PASS
+- valid case works
+- invalid case works
+- no params works
 
-#NICK
+# NICK
+- valid case works
+- duplicate case works
+- invalid char case works
 
-#USER
+# USER
 
-#PRIVMSG
+# PRIVMSG
+
+# MODE 
+- works with -i
