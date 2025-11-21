@@ -95,21 +95,16 @@ int		Server::channelAdder(std::string& channelName, User& user, std::string& pas
 	std::vector<Channel>::iterator channelIterator = _channels.begin();
 	while (channelIterator != _channels.end())
 	{
-		std::cout << "searching trough channels" << std::endl;
 		if (channelName == channelIterator->getName())
 		{
-			// TODO rimuovere prints per debug
-			std::cout << "channel found" << std::endl;
 			if (channelIterator->getInviteOnly())
 			{
 				if (channelIterator->getInvitedUsersVector().size() > 0)
 				{
 					size_t i = 0;
 					std::vector<User> invited_vect = channelIterator->getInvitedUsersVector();
-					// print_vec(invited_vect);
 					while (i < invited_vect.size())
 					{
-						// std::cout << YELLOW << invited_vect[i].getNick() << RESET << std::endl;
 						if (invited_vect[i] == user)
 						{
 							channelIterator->addUserToChannel(user, pass);

@@ -160,22 +160,22 @@ void Channel::showChannelTopic(User &user, const std::string serverName)
     const std::string &topic = getTopic();
     std::string reply;
 
-    if (topic.empty())
-    {
-        // 331 RPL_NOTOPIC
-        reply = ":" + serverName 
-              + " 331 " + user.getNick() 
-              + " " + _name 
-              + " :No topic is set\r\n";
-    }
-    else
-    {
-        // 332 RPL_TOPIC
-        reply = ":" + serverName 
-              + " 332 " + user.getNick() 
-              + " " + _name 
-              + " :" + topic + "\r\n";
-    }
+	if (topic.empty())
+	{
+		// 331 RPL_NOTOPIC
+		reply = ":" + serverName 
+			  + " 331 " + user.getNick() 
+			  + " #" + _name 
+			  + " :No topic is set\r\n";
+	}
+	else
+	{
+		// 332 RPL_TOPIC
+		reply = ":" + serverName 
+			  + " 332 " + user.getNick() 
+			  + " #" + _name 
+			  + " :" + topic + "\r\n";
+	}
 
 	send(user.getFd(), reply.c_str(), reply.size(), MSG_NOSIGNAL);
 }

@@ -333,7 +333,6 @@ int		Server::cmdInvite(std::vector<std::string> parsed_message, User &user)
 int		Server::cmdTopic(std::vector<std::string> parsed_message, User &user)
 {
 	std::string channel_name;
-	std::cout << "detected command TOPIC" << std::endl;
 	std::string arg2;
 
 	if (parsed_message.size() < 2)
@@ -351,18 +350,12 @@ int		Server::cmdTopic(std::vector<std::string> parsed_message, User &user)
 		send(user.getFd(), err_msg.c_str(), err_msg.size(), 0);
 		return 1;
 	}
-	std::cout << channel_name << std::endl;
 
 	if (removeInitialHash(&channel_name))
 	{
 		std::string err_msg = message_formatter2(461, "TOPIC", "need more params");
 		send(user.getFd(), err_msg.c_str(), err_msg.size(), 0);
 		return 1;
-	}
-	else
-	{
-		std::cout << "hash removed correctly" << std::endl;
-		std::cout << channel_name << std::endl;
 	}
 
 	Channel *targetChannel = findChannelByName(channel_name);
@@ -397,7 +390,10 @@ int		Server::cmdTopic(std::vector<std::string> parsed_message, User &user)
 		}
 		targetChannel->setTopic(arg2);
 		std::string broadcast = ":" + user.getNick() + "!" + user.getUser() + "@host TOPIC #" + channel_name + " :" + arg2 + "\r\n";
+		// Broadcast TOPIC (as a user action) to all other channel members
 		targetChannel->writeToChannel(broadcast, user.getNick());
+		// Send numeric RPL_TOPIC (332) to the setter so GUI clients update their topic UI
+		targetChannel->showChannelTopic(user, "server");
 		return 0;
 	}
 	else
@@ -476,7 +472,7 @@ int	Server::checkCmdMode(std::vector<std::string>& msg_parsed, User& user, Chann
 
 int Server::cmdMode(std::vector<std::string>& msg_parsed, User& user)
 {
-	std::cout << "detected command MODE" << std::endl;
+	//std::cout << "detected command MODE" << std::endl;
 	msg_parsed.erase(msg_parsed.begin());
 	if (msg_parsed.size() == 0)
 	{
