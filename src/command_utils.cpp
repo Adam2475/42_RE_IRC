@@ -107,7 +107,8 @@ int		Server::channelAdder(std::string& channelName, User& user, std::string& pas
 					{
 						if (invited_vect[i] == user)
 						{
-							channelIterator->addUserToChannel(user, pass);
+							if (channelIterator->addUserToChannel(user, pass))
+								return 1;
 							join_message_confirm(user, *channelIterator);
 							return (0);
 						}
@@ -130,7 +131,8 @@ int		Server::channelAdder(std::string& channelName, User& user, std::string& pas
 					return 1;
 				}
 			}
-			channelIterator->addUserToChannel(user, pass);
+			if (channelIterator->addUserToChannel(user, pass))
+				return 1;
 			join_message_confirm(user, *channelIterator);			
 			return (0);
 		}

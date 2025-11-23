@@ -39,7 +39,6 @@ Channel::Channel(std::string& name, std::string& passwd, User& creator, std::str
 {
 	_user_vector.push_back(creator);
 	_operators_vector.push_back(creator);
-	std::cout << "Channel " << name << " created successfully!" << std::endl;
 }
 
 Channel::~Channel()
@@ -100,7 +99,12 @@ std::string Channel::getNickList() const
 {
 	std::string users_list;
 	for (size_t i = 0; i < _user_vector.size(); i++)
-		users_list += _user_vector[i].getNick() + " ";
+	{
+		if (isInVector(const_cast<User&>(_user_vector[i]), this->getUserOperatorsVector()))
+			users_list += '@' + _user_vector[i].getNick() + " ";
+		else
+			users_list += _user_vector[i].getNick() + " ";
+	}
 	return users_list;
 }
 
@@ -213,11 +217,12 @@ void	Channel::kickUser(User& user, User& user_operator, std::string reason)
 	}
 }
 
-void	Channel::partUser(User& user, Channel &channel, std::string msg, int mode)
+void	Channel::partUser(User& user, std::string msg, int mode)
 {
-	std::string channelName = channel.getName();
 	std::string user_prefix = user.getNick() + "!" + user.getUser() + "@";
 	std::string part_msg;
+	std::string userNick = user.getNick();
+	std::string userUser = user.getNick();
 
 	for (std::vector<User>::iterator it = _user_vector.begin(); it != _user_vector.end(); ++it)
 	{
@@ -240,48 +245,50 @@ void	Channel::partUser(User& user, Channel &channel, std::string msg, int mode)
 	}
 	
 	if (mode == PART)
-		part_msg = ":" + user_prefix + " PART #" + channelName + " :" + msg + "\r\n";
+		part_msg = ":" + user_prefix + " PART #" + _name + " :" + msg + "\r\n";
 	else if (mode == QUIT)
 		part_msg = ":" + user_prefix + " QUIT" + " :" + msg + "\r\n";
 
     // Broadcast to all users in the channel (including the sender)
-	channel.writeToChannel(part_msg, user.getNick());
+	this->writeToChannel(part_msg, user.getNick());
 	send(user.getFd(), part_msg.c_str(), part_msg.size(), MSG_NOSIGNAL);
-	if (channel.getUserVector().size() == 0)
+	if (_user_vector.size() == 0)
 	{
 		_name.erase(0, _name.size());
 		return ;
 	}
-	if (channel.getUserOperatorsVector().size() == 0 && channel.getUserVector().size() > 0)
+	if (_operators_vector.size() == 0
+		&& _user_vector.size() > 0)
 	{
-		channel._operators_vector.push_back(*channel.getUserVector().begin());
-		std::string confirm = ":server MODE #" + _name + ' ' + user.getNick() + ' ' + channel.getUserVector().begin()->getNick() + "\r\n";
-		writeToChannel(confirm, user.getNick());
+		_operators_vector.push_back(*_user_vector.begin());
+		std::string msg = ":" + userNick + "!" + userUser + "@host MODE #" + _name + " +o " + _user_vector.begin()->getNick() + "\r\n";
+		this->writeToChannel(msg, user.getNick());
 	}
 }
 
-void	Channel::addUserToChannel(User& user, std::string& passwd)
+int	Channel::addUserToChannel(User& user, std::string& passwd)
 {
 	if (!_passwd.empty() && _passwd.compare(passwd) != 0)
 	{
 		std::string tmp(message_formatter(475, user.getNick(), _name, "Cannot join channel (+k)"));
 		send(user.getFd(), tmp.c_str(), tmp.size(), MSG_NOSIGNAL);
-		return ;
+		return 1;
 	}
 	if (isInVector(user, _user_vector))
 	{
 		std::string tmp(message_formatter(443, user.getNick(), _name, "is already on channel"));
 		send(user.getFd(), tmp.c_str(), tmp.size(), MSG_NOSIGNAL);
-		return ;
+		return 1;
 	}
-	if (_max_users == static_cast<size_t>(-1) && (_user_vector.size() + 1 >= _max_users))
+	if (_user_vector.size() == _max_users)
 	{
 		std::string tmp(message_formatter(471, user.getNick(), _name, "Channel is full"));
 		send(user.getFd(), tmp.c_str(), tmp.size(), MSG_NOSIGNAL);
-		return ;
+		return 1;
 	}
 	else
 		_user_vector.push_back(user);
+	return 0;
 }
 
 
@@ -330,16 +337,25 @@ void Channel::updateUserNickByFd(int fd, const std::string& newNick)
 
 // Mode commands
 
-void	Channel::modeInvite(std::string& arg)
+
+std::string mode_msg_formatter(User& user, std::string mode, std::string& channelName)
+{
+	std::string msg = ":" + user.getNick() + "!" + user.getUser() + "@host MODE #" + channelName + ' ' + mode + "\r\n";
+	return msg;
+}
+
+void	Channel::modeInvite(std::string& arg, User& user)
 {	
 	std::cout << MAGENTA << "entro nel INVITE mode" << RESET << std::endl;
 	if (arg[0] == '+')
 		setInviteOnly(true);
 	else if (arg[0] == '-')
 		setInviteOnly(false);
+	std::string reply = mode_msg_formatter(user, arg, this->_name);
+	this->writeToChannel(reply, "");
 }
 
-void	Channel::modePassword(std::vector<std::string>& msg_parsed, std::string& arg)
+void	Channel::modePassword(std::vector<std::string>& msg_parsed, std::string& arg, User& user)
 {
 	std::cout << CYAN << "entro nel PASSWORD mode" << RESET << std::endl;
 	if (arg[0] == '-')
@@ -349,6 +365,9 @@ void	Channel::modePassword(std::vector<std::string>& msg_parsed, std::string& ar
 	}
 	else if (arg[0] == '+')
 		setPassword(msg_parsed[1]);
+	std::string mode(arg + ' ' + this->getPassword());
+	std::string reply = mode_msg_formatter(user, mode, this->_name);
+	this->writeToChannel(reply, "");
 }
 
 int	Channel::modeMaxUsers(std::vector<std::string>& msg_parsed, std::string& arg, User& user)
@@ -367,7 +386,12 @@ int	Channel::modeMaxUsers(std::vector<std::string>& msg_parsed, std::string& arg
 		setMaxUsers(num);
 	}
 	else if (arg[0] == '-')
-		setMaxUsers(-1);
+		setMaxUsers(0);
+	std::stringstream oss;
+	oss << this->getMaxUsers();
+	std::string mode(arg + ' ' + oss.str());
+	std::string reply = mode_msg_formatter(user, mode, this->_name);
+	this->writeToChannel(reply, "");
 	return 0;
 }
 
@@ -385,29 +409,25 @@ int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 	if (arg[0] == '-')
 	{
 		if (isInVector(*new_operator, this->_operators_vector))
-		{
 			this->_operators_vector.erase(std::find(_operators_vector.begin(), _operators_vector.end(), *new_operator));
-			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick() + "\r\n";
-			writeToChannel(confirm, "");
-		}
 	}
 	else if (arg[0] == '+')
 	{
 		if (!isInVector(*new_operator, this->_operators_vector))
-		{
 			this->_operators_vector.push_back(*new_operator);
-			std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick() + "\r\n";
-			writeToChannel(confirm, "");
-		}
 	}
+	std::string confirm = ":server MODE #" + _name + ' ' + arg + ' ' + new_operator->getNick() + "\r\n";
+	writeToChannel(confirm, "");
 	return 0;
 }
 
-void	Channel::modeTopic(std::string& arg)
+void	Channel::modeTopic(std::string& arg, User& user)
 {
 	std::cout << BLUE << "entro nell'TOPIC mode" << RESET << std::endl;
 	if (arg[0] == '-')
 		setTopicRestriction(false);
 	else if (arg[0] == '+')
 		setTopicRestriction(true);
+	std::string reply = mode_msg_formatter(user, arg, this->_name);
+	this->writeToChannel(reply, "");
 }

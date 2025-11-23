@@ -77,5 +77,6 @@ std::string                 message_formatter(int error, const std::string& nick
 bool	                    isStrNotPrintable(const char *str);
 int                         removeInitialHash(std::string *target);
 bool                        isValidNick(const std::string &nick);
+std::string                 mode_msg_formatter(User& user, std::string mode, std::string& channelName);
 
 #endif

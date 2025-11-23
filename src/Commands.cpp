@@ -57,7 +57,7 @@ int Server::cmdPart(std::vector<std::string> parsed_message, User &user)
 	}
 
 	reason = parsed_message.size() == 3 ? parsed_message[2] : "Leaving";
-	targetChannel->partUser(user, *targetChannel, reason, PART);
+	targetChannel->partUser(user, reason, PART);
 
 	return 0;
 }
@@ -489,9 +489,9 @@ int Server::cmdMode(std::vector<std::string>& msg_parsed, User& user)
 		return 0;
 	std::string flag = msg_parsed[0];
 	if (flag[1] == 'i')
-		targetChannel->modeInvite(flag);
+		targetChannel->modeInvite(flag, user);
 	else if (flag[1] == 'k')
-		targetChannel->modePassword(msg_parsed, flag);
+		targetChannel->modePassword(msg_parsed, flag, user);
 	else if (flag[1] == 'l' && targetChannel->modeMaxUsers(msg_parsed, flag, user))
 		return 1;
 	else if (flag[1] == 'o')
@@ -514,7 +514,7 @@ int Server::cmdMode(std::vector<std::string>& msg_parsed, User& user)
 			return 1;
 	}
 	else if (flag[1] == 't')
-		targetChannel->modeTopic(flag);
+		targetChannel->modeTopic(flag, user);
 	return 0;
 }
 

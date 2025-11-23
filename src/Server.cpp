@@ -47,7 +47,7 @@ void Server::remove_user_from_channels(int clientSocket, std::string quit_msg)
 	for (std::vector<Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
 		if (isInVector(*quittingUser, it->getUserVector()))
-			it->partUser(*quittingUser, *it, quit_msg, QUIT);
+			it->partUser(*quittingUser, quit_msg, QUIT);
 	}	
 }
 

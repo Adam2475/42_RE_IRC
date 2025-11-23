@@ -28,7 +28,7 @@ class Channel
 			, size_t max_users, bool invite_only, bool topic_restriction);
 		~Channel();
 
-		void	addUserToChannel(User& user, std::string& passwd);
+		int		addUserToChannel(User& user, std::string& passwd);
 		void 	addToInvited(User& user);
 		// void	inviteUser(User& user, User&user_operator);
 		void	addUserToOperatorsVector(User& user, User& user_operator);
@@ -40,7 +40,7 @@ class Channel
 		///////////////////////
 
 		void	kickUser(User& user, User& user_operator, std::string reason);
-		void	partUser(User& user, Channel &channel, std::string msg, int mode);
+		void	partUser(User& user, std::string msg, int mode);
 		void	writeToChannel(std::string& buffer, std::string sending_nick) const;
 		void	showChannelTopic(User &user, const std::string serverName);
 		bool	isOperatorUser(User target_user) const;
@@ -73,11 +73,11 @@ class Channel
 		/////////////////////
 
 
-		void modeInvite(std::string& arg);
-		void modePassword(std::vector<std::string>& msg_parsed, std::string& arg);
+		void modeInvite(std::string& arg, User& user);
+		void modePassword(std::vector<std::string>& msg_parsed, std::string& arg, User& user);
 		int modeMaxUsers(std::vector<std::string>& msg_parsed, std::string& arg, User& user);
 		int modeOperator(std::string& arg, User& user, User* new_operator);
-		void modeTopic(std::string& arg);
+		void modeTopic(std::string& arg, User& user);
 
 		// Ensure channel's internal User copies reflect a nick change (match by fd)
 		void updateUserNickByFd(int fd, const std::string& newNick);
