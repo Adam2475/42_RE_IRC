@@ -73,10 +73,7 @@ int check_existing_user(std::vector<User> users, std::string username)
 	for (it = users.begin(); it != users.end(); it++)
 	{
 		if (it->getNick() == username)
-		{
-			//std::cout << "username: " << username << " checked nick: " << it->getNick() << std::endl;
 			return (1);
-		}
 	}
 	return (0);
 }

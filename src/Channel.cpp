@@ -166,7 +166,6 @@ void Channel::showChannelTopic(User &user, const std::string serverName)
 
 	if (topic.empty())
 	{
-		// 331 RPL_NOTOPIC
 		reply = ":" + serverName 
 			  + " 331 " + user.getNick() 
 			  + " #" + _name 
@@ -174,7 +173,6 @@ void Channel::showChannelTopic(User &user, const std::string serverName)
 	}
 	else
 	{
-		// 332 RPL_TOPIC
 		reply = ":" + serverName 
 			  + " 332 " + user.getNick() 
 			  + " #" + _name 
@@ -187,7 +185,6 @@ void Channel::showChannelTopic(User &user, const std::string serverName)
 void	Channel::kickUser(User& user, User& user_operator, std::string reason)
 {
 	std::string reply_kick;
-	// :dan!d@localhost KICK #Melbourne alice :dan
 	if (reason.empty())
 		reply_kick = ":" + user_operator.getNick() + "!" + user.getUser() + 
 			"@localhost KICK #" + this->_name + ' ' + user.getNick() + " :" + user_operator.getNick() + "\r\n";
@@ -248,8 +245,6 @@ void	Channel::partUser(User& user, std::string msg, int mode)
 		part_msg = ":" + user_prefix + " PART #" + _name + " :" + msg + "\r\n";
 	else if (mode == QUIT)
 		part_msg = ":" + user_prefix + " QUIT" + " :" + msg + "\r\n";
-
-    // Broadcast to all users in the channel (including the sender)
 	this->writeToChannel(part_msg, user.getNick());
 	send(user.getFd(), part_msg.c_str(), part_msg.size(), MSG_NOSIGNAL);
 	if (_user_vector.size() == 0)
@@ -296,7 +291,6 @@ void	Channel::addUserToOperatorsVector(User& user, User& user_operator)
 {
 	if (!isInVector(user_operator, _operators_vector))
 	{
-		// 481 ERR_NOPRIVILEGES
 		std::string tmp(message_formatter(481, user_operator.getNick(), _name, "You're not an operator"));
 		send(user_operator.getFd(), tmp.c_str(), tmp.size(), MSG_NOSIGNAL);
 		return ;
@@ -346,7 +340,6 @@ std::string mode_msg_formatter(User& user, std::string mode, std::string& channe
 
 void	Channel::modeInvite(std::string& arg, User& user)
 {	
-	std::cout << MAGENTA << "entro nel INVITE mode" << RESET << std::endl;
 	if (arg[0] == '+')
 		setInviteOnly(true);
 	else if (arg[0] == '-')
@@ -357,14 +350,20 @@ void	Channel::modeInvite(std::string& arg, User& user)
 
 void	Channel::modePassword(std::vector<std::string>& msg_parsed, std::string& arg, User& user)
 {
-	std::cout << CYAN << "entro nel PASSWORD mode" << RESET << std::endl;
 	if (arg[0] == '-')
 	{
 		std::string empty;
 		setPassword(empty);
 	}
-	else if (arg[0] == '+')
+	else if (arg[0] == '+' && msg_parsed.size() > 1)
 		setPassword(msg_parsed[1]);
+	else if (msg_parsed.size() == 1)
+	{
+		std::string mode_err(message_formatter(461, user.getNick(), _name, "Not enough parameters"));
+		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
+		return ;
+	}
+	msg_parsed.erase(msg_parsed.begin() + 1);
 	std::string mode(arg + ' ' + this->getPassword());
 	std::string reply = mode_msg_formatter(user, mode, this->_name);
 	this->writeToChannel(reply, "");
@@ -372,18 +371,26 @@ void	Channel::modePassword(std::vector<std::string>& msg_parsed, std::string& ar
 
 int	Channel::modeMaxUsers(std::vector<std::string>& msg_parsed, std::string& arg, User& user)
 {
-	std::cout << YELLOW << "entro nel MAXUSERS mode" << RESET << std::endl;
 	if (arg[0] == '+' && msg_parsed.size() == 1)
 	{
-		std::cout << RED << _name << " flag +l: number not inserted" << RESET << std::endl;
 		std::string mode_err = "461 " + user.getNick() + " MODE: need more params\r\n";
 		send(user.getFd(), mode_err.c_str(), mode_err.size(), MSG_NOSIGNAL);
 		return 1;
 	}
-	else if (arg[0] == '+')
+	else if (arg[0] == '+' && msg_parsed.size() > 1)
 	{
-		int num = atoi(msg_parsed[1].c_str());
-		setMaxUsers(num);
+		if (!is_numeric(msg_parsed[1].c_str()))
+		{
+			int num = atoi(msg_parsed[1].c_str());
+			setMaxUsers(num);
+			msg_parsed.erase(msg_parsed.begin() + 1);
+		}
+		else
+		{
+			std::string mode_err = "461 " + user.getNick() + " MODE: need more params\r\n";
+			send(user.getFd(), mode_err.c_str(), mode_err.size(), MSG_NOSIGNAL);
+			return 1;
+		}
 	}
 	else if (arg[0] == '-')
 		setMaxUsers(0);
@@ -397,7 +404,6 @@ int	Channel::modeMaxUsers(std::vector<std::string>& msg_parsed, std::string& arg
 
 int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 {
-	std::cout << GREEN << "entro nell'OPERATORS mode" << RESET << std::endl;
 	if(std::find(this->_user_vector.begin(), this->_user_vector.end(), *new_operator) == this->_user_vector.end())
 	{
 		std::string mode_err = ":server 441" + user.getNick()
@@ -423,7 +429,6 @@ int	Channel::modeOperator(std::string& arg, User& user, User* new_operator)
 
 void	Channel::modeTopic(std::string& arg, User& user)
 {
-	std::cout << BLUE << "entro nell'TOPIC mode" << RESET << std::endl;
 	if (arg[0] == '-')
 		setTopicRestriction(false);
 	else if (arg[0] == '+')

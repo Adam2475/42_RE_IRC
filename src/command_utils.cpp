@@ -1,5 +1,4 @@
 #include "../inc/header.hpp"
-// #include "../inc/Channel.hpp"
 #include "../inc/Server.hpp"
 
 User*	Server::findUserByNick(std::string& targetNick)
@@ -43,7 +42,7 @@ std::string message_formatter2(int error, std::string command, const char* messa
 	std::string msg;
 	std::ostringstream oss;
 	oss << error;
-	msg  = ":server" + oss.str() + ' ' + command + " :" + message + "\r\n";
+	msg = ":server" + oss.str() + ' ' + command + " :" + message + "\r\n";
 	return (msg);
 }
 
@@ -51,42 +50,38 @@ void    Server::channelCreate(std::string& channelName, std::string& pass, User&
 {
 	std::string topic;
 	Channel new_channel(channelName, pass, user, topic, 0, 0, 1);
+
 	_channels.push_back(new_channel);
-	// Standard IRC Replies for successful channel creation and join
-    std::string join_msg = ":" + user.getNick() + " JOIN #" + channelName + "\r\n";
-    send(user.getFd(), join_msg.c_str(), join_msg.size(), 0);
+	std::string join_msg = ":" + user.getNick() + " JOIN #" + channelName + "\r\n";
+	send(user.getFd(), join_msg.c_str(), join_msg.size(), 0);
 	if (!topic.empty())
-    {
+	{
 		std::string topic_msg = ":server 332 " + user.getNick() + " #" + channelName + " :" + topic + "\r\n";
-    	send(user.getFd(), topic_msg.c_str(), topic_msg.size(), 0);
+		send(user.getFd(), topic_msg.c_str(), topic_msg.size(), 0);
 	}
 	else if (topic.empty())
 	{
 		std::string topic_msg = ":server 331 " + user.getNick() + " #" + channelName + " :No topic is set\r\n";
-    	send(user.getFd(), topic_msg.c_str(), topic_msg.size(), 0);
+		send(user.getFd(), topic_msg.c_str(), topic_msg.size(), 0);
 	}
-    std::string namreply_msg = ":server 353 " + user.getNick() + " = #" + channelName + " :" + user.getNick() + "\r\n";
-    send(user.getFd(), namreply_msg.c_str(), namreply_msg.size(), 0);
-    std::string endofnames_msg = ":server 366 " + user.getNick() + " #" + channelName + " :End of /NAMES list.\r\n";
-    send(user.getFd(), endofnames_msg.c_str(), endofnames_msg.size(), 0);
+	std::string namreply_msg = ":server 353 " + user.getNick() + " = #" + channelName + " :" + user.getNick() + "\r\n";
+	send(user.getFd(), namreply_msg.c_str(), namreply_msg.size(), 0);
+	std::string endofnames_msg = ":server 366 " + user.getNick() + " #" + channelName + " :End of /NAMES list.\r\n";
+	send(user.getFd(), endofnames_msg.c_str(), endofnames_msg.size(), 0);
 	std::string confirm_op = ":server MODE #" + channelName + " +o " + user.getNick() + "\r\n";
-    send(user.getFd(), confirm_op.c_str(), confirm_op.size(), 0);
+	send(user.getFd(), confirm_op.c_str(), confirm_op.size(), 0);
 }
 
 void		Server::join_message_confirm(User &user, Channel& channel) const
 {
-	// Standard IRC Replies for JOIN
 	std::string join_msg = ":" + user.getNick() + "!" + user.getUser() + "@" + " JOIN #" + channel.getName() + "\r\n";
 	channel.writeToChannel(join_msg, "");
 	std::string topic_msg = ":server 332 " + user.getNick() + " #" + channel.getName() + " :" + channel.getTopic() + "\r\n";
-	//send(user.getFd(), topic_msg.c_str(), topic_msg.size(), 0);
 	std::string users_list = channel.getNickList();
 	std::string namreply_msg = ":server 353 " + user.getNick() + " = #" + channel.getName() + " :" + users_list + "\r\n";
 	send(user.getFd(), namreply_msg.c_str(), namreply_msg.size(), 0);
-	//channel.writeToChannel(namreply_msg, "");
 	std::string endofnames_msg = ":server 366 " + user.getNick() + " #" + channel.getName() + " :End of /NAMES list.\r\n";
 	send(user.getFd(), endofnames_msg.c_str(), endofnames_msg.size(), 0);
-	//channel.writeToChannel(endofnames_msg, "");
 }
 
 

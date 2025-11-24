@@ -2,20 +2,20 @@
 #define HEADER_HPP
 
 #include <iostream>
-#include <cstring> // for strlen
-#include <cctype> // for isdigit
-#include <cstdlib> // for exit
-#include <netinet/in.h> // for sockaddr_in struct
-#include <unistd.h> // for clone
+#include <cstring> 
+#include <cctype> 
+#include <cstdlib> 
+#include <netinet/in.h> 
+#include <unistd.h> 
 #include <sys/socket.h>
 #include <poll.h>
 #include <vector>
 #include <map>
 #include <algorithm>
 #include <sstream>
-// #include <fcntl.h>
+
 #include <csignal>
-// header should only be included elswhere for prototypes
+
 class User;
 class Channel;
 
@@ -69,7 +69,6 @@ int                         bind_socket(int *serv_fd, const sockaddr_in *serv_ad
 int                         create_socket(int *serv_fd);
 int                         set_socket_listen(int *serv_fd);
 void                        init_pollfd(pollfd *tmp, int fd);
-//std::vector<std::string>    parse_message(char *buffer);
 std::vector<std::string>    parse_message(std::string buffer);
 int                         clearStrCRFL(std::string& received);
 void                        signalHandler(int sig);

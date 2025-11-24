@@ -346,27 +346,20 @@ void Server::start_main_loop()
 		//signal(SIGQUIT, signalHandler);
 		signal(SIGTSTP, signalHandler);
 		if (exit_code)
-		{
 			this->~Server();
-		}
-
 		if (exit_code)
 		{
 			close(_serv_fd);
 			break ;
 		}
-
 		if (poll(_poll_fds.data(), _poll_fds.size(), 0) == -1)
 			return ;
-
 		if (_poll_fds[0].revents & POLLIN)
 		{
 			client_socket = accept(_serv_fd, NULL, NULL);
-			// std::cout << client_socket << std::endl;
 			if (client_socket > 0)
 				handle_new_connection(&tmp, client_socket);
 		}
-
 		for (int i = 1; i < (int)_poll_fds.size(); i++)
 		{
 			if (_poll_fds[i].revents & POLLIN)
@@ -374,63 +367,42 @@ void Server::start_main_loop()
 				User *sending_user = getUserByFd(_poll_fds[i].fd);
 				bzero(buffer, sizeof(buffer));
 				status = recv(_poll_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
-				
 				if (status > 0)
 				{
-					// append message to user buffer
 					int user_fd = _poll_fds[i].fd;
 					sending_user->_buffer.append(buffer, (size_t)status);
 					
-					// search newline in the string
 					std::string tmp = sending_user->_buffer;
 					size_t newline_pos;
 					bool user_still_exists = true;
-
 					while ((newline_pos = tmp.find('\n')) != std::string::npos)
 					{
-
-						// take up to the newline (inclusive) and remove from buffer
 						std::string line = tmp.substr(0, newline_pos + 1);
 						tmp.erase(0, newline_pos + 1);
-
-						// strip trailing CR/LF
 						while (!line.empty() && (line[line.size() - 1] == '\r' || line[line.size() - 1] == '\n'))
 							line.erase(line.end() - 1);
-
 						if (line.empty())
 							continue;
-
 						std::vector<std::string> parsed_message = parse_message(line);
-
-						//std::cout << line << std::endl;
-						
 						if (handle_commands(parsed_message, sending_user))
 						{
-							// command was handled; the command may have disconnected the user
 							if (getUserByFd(user_fd) == NULL)
 							{
 								user_still_exists = false;
 								break;
 							}
-							// user still present, continue processing next line
 							continue;
 						}
 					}
-				// save any remaining partial data back into the user's buffer
-				if (user_still_exists)
-				{
-					User *maybe_user = getUserByFd(user_fd);
-					if (maybe_user)
-						maybe_user->_buffer = tmp;
+					if (user_still_exists)
+					{
+						User *maybe_user = getUserByFd(user_fd);
+						if (maybe_user)
+							maybe_user->_buffer = tmp;
+					}
 				}
-				}
-				// handle client disconnection
 				else if (status == 0)
-				{
-					// process partial commands before disconnecting
 					disconnectClient(_poll_fds[i].fd, ":Client Quit");
-					//std::cout << "client disconnected" << std::endl;
-				}
 			}
 		}
 	}

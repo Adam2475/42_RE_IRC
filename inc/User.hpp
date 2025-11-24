@@ -2,7 +2,6 @@
 #define USER_HPP
 #include <iostream>
 #include <vector>
-// #include "header.hpp"
 
 class User
 {
@@ -12,7 +11,7 @@ class User
         int             _fd;
         bool            _is_active;
         bool            _set_pass;
-        //bool            _wrong_pass;
+
     public:
         std::string     _buffer;
         User();
@@ -36,8 +35,6 @@ class User
         void        setUser(std::string user);
         std::string getUser() const;
         void        setActive(bool value);
-        //void        setWrongPswd(bool value);
-        //bool        getWrongPswd();
 };
 
 int     check_existing_user(std::vector<User> users, std::string username);

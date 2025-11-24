@@ -46,6 +46,7 @@ class Server
 		void		join_message_confirm(User &user, Channel& channel) const;
 		size_t		findChannelIndex(std::string target);
 		size_t		findUserIndex(std::string target);
+		bool		flagProcessing(std::string flag, Channel& targetChannel, User& user, std::vector<std::string>& msg_parsed);
 
 		///////////////////
 		// Commands
