@@ -399,7 +399,7 @@ bool		Server::flagProcessing(std::string flag, Channel& targetChannel, User& use
 		size_t i = 1;
 		for (i = 1; i < msg_parsed.size(); i++)
 		{
-			User* new_operator = findUserByNick(msg_parsed[i]);
+			new_operator = findUserByNick(msg_parsed[i]);
 			if (new_operator)
 				break;
 		}

@@ -356,14 +356,16 @@ void	Channel::modePassword(std::vector<std::string>& msg_parsed, std::string& ar
 		setPassword(empty);
 	}
 	else if (arg[0] == '+' && msg_parsed.size() > 1)
+	{
 		setPassword(msg_parsed[1]);
+		msg_parsed.erase(msg_parsed.begin() + 1);
+	}
 	else if (msg_parsed.size() == 1)
 	{
 		std::string mode_err(message_formatter(461, user.getNick(), _name, "Not enough parameters"));
 		send(user.getFd(), mode_err.c_str(), mode_err.size(), 0);
 		return ;
 	}
-	msg_parsed.erase(msg_parsed.begin() + 1);
 	std::string mode(arg + ' ' + this->getPassword());
 	std::string reply = mode_msg_formatter(user, mode, this->_name);
 	this->writeToChannel(reply, "");
