@@ -1,4 +1,4 @@
-Questo è un progetto di coppia fatto come parte del core curriculum alla scuola 42 di Firenze, si tratta un'implementazione minimale di un server IRC in C++, è testato utilizzando "Konversation", perciò il comportamento con altri client può variare.
+Questo è un progetto di gruppo fatto come parte del core curriculum alla scuola 42 di Firenze, si tratta un'implementazione minimale di un server IRC in C++, è testato utilizzando "Konversation", perciò il comportamento con altri client può variare.
 
 Il progetto si basa su socket UNIX perciò il funzionamento in altri ambienti non è garantito.
 
